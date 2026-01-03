@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PG-DAC Cloud Ultimate</title>
+    <title>PG-DAC Cloud Ultimate (Complete)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -62,17 +62,20 @@
         }
         
         .glass-panel {
-            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
         .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.75); border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .sortable-ghost { opacity: 0.4; background: #e0e7ff; }
         
         .group:hover .delete-btn { opacity: 1; pointer-events: auto; }
         .delete-btn { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        
+        /* Overlays */
+        #auth-overlay, #session-lock { transition: opacity 0.3s ease; }
         
         html { font-size: 16px; scroll-behavior: smooth; } 
     </style>
@@ -127,18 +130,18 @@
         </div>
 
         <div class="px-6 mt-6 mb-2">
-            <div class="bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-slate-800 p-5 rounded-2xl text-center border border-indigo-100 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-                <div class="absolute top-0 right-0 w-16 h-16 bg-indigo-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                <div id="user-badge-icon" class="text-5xl mb-2 drop-shadow-md transform transition group-hover:scale-110 duration-300">🌱</div>
-                <h3 id="user-rank" class="font-bold text-lg text-slate-800 dark:text-white">Novice</h3>
-                <p id="sidebar-percent" class="text-sm text-indigo-500 dark:text-indigo-400 font-semibold mt-1">0% Mastery</p>
-                <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-4 overflow-hidden">
-                    <div id="sidebar-progress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            <div class="bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-slate-800 p-4 rounded-2xl text-center border border-indigo-100 dark:border-slate-700 shadow-sm">
+                <div class="flex justify-center items-center gap-2 mb-1">
+                    <span id="user-badge-icon" class="text-2xl">🌱</span>
+                    <h3 id="user-rank" class="font-bold text-slate-800 dark:text-white">Novice</h3>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                    <div id="sidebar-progress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
             </div>
         </div>
 
-        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-2">
+        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-4">
             <button onclick="switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3.5 text-base font-medium rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95">
                 <i class="fa-solid fa-chart-pie"></i> Dashboard
             </button>
@@ -288,16 +291,17 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // --- 2. DATA DEFAULTS ---
+        // --- 2. DATA DEFAULTS (COMPLETE SYLLABUS) ---
         const defaultSyllabus = [
              { id: "algo", title: "Algorithms (Java)", topics: ["Problem Solving", "Complexity (Big O)", "Arrays, Stacks, Queues", "Linked Lists", "Recursion", "Trees (BST, AVL)", "Searching & Sorting", "Hashing", "Graphs (BFS, DFS)", "Algo Design"] },
              { id: "os", title: "OS & Methodologies", topics: ["OS Concepts", "Linux & Shell", "Process Mgmt", "Memory Mgmt", "Deadlocks", "Git & Version Control", "SDLC & Agile", "DevOps & Docker", "Testing (Selenium)"] },
-             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections", "Streams API", "Multithreading", "Exception Handling", "File IO", "Serialization"] },
-             { id: "web", title: "Web Tech", topics: ["HTML5 & CSS3", "JavaScript ES6+", "DOM", "React Components", "React Hooks", "Node.js & Express", "REST APIs", "Redux"] },
+             { id: "cpp", title: "C++ Programming", topics: ["Pointers", "Memory Mgmt", "OOP in C++", "Polymorphism", "Templates & STL", "Exception Handling"] },
              { id: "dbms", title: "Database Tech", topics: ["Normalization", "SQL Queries", "Joins", "Procedures & Triggers", "MongoDB CRUD", "NoSQL Concepts"] },
              { id: "dotnet", title: "MS.Net Tech", topics: [".Net Framework", "C# Basics", "OOP in C#", "LINQ", "Async/Await", "ASP.Net MVC", "Entity Framework"] },
-             { id: "cpp", title: "C++ Programming", topics: ["Pointers", "Memory Mgmt", "OOP in C++", "Polymorphism", "Templates & STL", "Exception Handling"] },
-             { id: "aptitude", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation", "Communication Skills", "Interview Prep"] }
+             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections Framework", "Interfaces & Abstract", "Multithreading", "Exception Handling", "File IO", "Serialization"] },
+             { id: "aptitude", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation", "Communication Skills", "Interview Prep"] },
+             { id: "web", title: "Web Tech", topics: ["HTML5 & CSS3", "JavaScript ES6+", "DOM Manipulation", "React Components", "React Hooks", "Node.js & Express", "REST APIs", "Redux"] },
+             { id: "java_web", title: "Web-based Java", topics: ["JDBC", "Servlets", "JSP & JSTL", "Hibernate", "Spring Core", "Spring MVC", "Spring Boot", "Spring Data JPA", "Microservices"] }
         ];
 
         let appState = {
@@ -345,7 +349,13 @@
                     }
                     if(data.appState) {
                         appState = data.appState;
-                        if(!appState.syllabus) appState.syllabus = JSON.parse(JSON.stringify(defaultSyllabus));
+                        // Validation: If sync happens but missing data structure
+                        if(!appState.syllabus || appState.syllabus.length < 9) {
+                            appState.syllabus = JSON.parse(JSON.stringify(defaultSyllabus));
+                        }
+                        if(!appState.subjectOrder || appState.subjectOrder.length < 9) {
+                            appState.subjectOrder = defaultSyllabus.map(s=>s.id);
+                        }
                         renderSidebar();
                         renderDashboard();
                         initCountdown();
@@ -354,6 +364,16 @@
                         document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-circle text-[8px] text-green-500 animate-pulse"></i> Connected';
                     }
                 } else {
+                    // New user: Check if local storage exists and migrate
+                    const localData = localStorage.getItem('pgdac_tracker_v6');
+                    if (localData) {
+                        try {
+                            appState = JSON.parse(localData);
+                            console.log("Migrating local data to cloud...");
+                        } catch(e) {
+                            console.log("Local data corrupted, using default");
+                        }
+                    }
                     saveToCloud(); 
                 }
             });
@@ -554,6 +574,25 @@
             else { for(let i=0; i<3 && candidates.length; i++) { const r = Math.floor(Math.random()*candidates.length); const item = candidates.splice(r, 1)[0]; list.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl border-l-4 border-yellow-400 text-left"><p class="text-xs text-slate-500 uppercase font-bold">${item.s}</p><p class="font-bold text-slate-800 dark:text-white text-lg">${item.t}</p></div>`; } }
             document.getElementById('flash-modal').classList.remove('hidden');
         }
+        
+        // Export/Import
+        function exportData() { const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState)); a.download = `pgdac_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+        
+        function importData(i) { 
+            const r = new FileReader(); 
+            r.onload = e => { 
+                try {
+                    const loadedData = JSON.parse(e.target.result);
+                    appState = loadedData;
+                    saveToCloud(); // IMPORTANT: Save imported data to cloud immediately
+                    location.reload(); 
+                } catch(err) {
+                    alert("Invalid File");
+                }
+            }; 
+            r.readAsText(i.files[0]); 
+        }
+        
         function setupDragAndDrop() {} // handled in openSettings
     </script>
 </body>
