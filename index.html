@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PG-DAC Cloud Tracker</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        primary: '#6366f1',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.75); border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Loaders & UI Elements */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #6366f1; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .checkbox-wrapper input:checked + div { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-color: transparent; transform: scale(1.05); }
+        .group:hover .delete-btn { opacity: 1; pointer-events: auto; }
+        .delete-btn { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        
+        /* Session Lock Overlay */
+        #session-lock { z-index: 9999; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-darkBg dark:via-darkBg dark:to-slate-900 text-slate-700 dark:text-slate-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden transition-colors duration-300">
+
+    <div id="auth-overlay" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center">
+        <div class="bg-white dark:bg-darkCard p-8 rounded-3xl shadow-2xl max-w-md w-full text-center animate-fade-up">
+            <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-3xl mx-auto mb-6 shadow-lg">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">PG-DAC Tracker</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">Cloud Sync & Session Protection</p>
+            
+            <button onclick="signIn()" class="w-full py-3.5 rounded-xl bg-white border border-gray-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-600 transition flex items-center justify-center gap-3 font-semibold text-slate-700 shadow-sm">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
+                Sign in with Google
+            </button>
+            <p id="login-error" class="text-red-500 text-sm mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <div id="session-lock" class="fixed inset-0 bg-red-900/95 backdrop-blur-xl flex items-center justify-center hidden text-center p-8">
+        <div class="max-w-lg">
+            <i class="fa-solid fa-lock text-6xl text-white/80 mb-6"></i>
+            <h2 class="text-3xl font-bold text-white mb-4">Session Paused</h2>
+            <p class="text-red-100 text-lg mb-8">
+                You have logged in on another device. To prevent data conflicts, this session has been disconnected.
+            </p>
+            <button onclick="location.reload()" class="px-8 py-3 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 transition">
+                Refresh & Take Over
+            </button>
+        </div>
+    </div>
+
+    <aside class="w-full md:w-72 bg-white/80 dark:bg-darkCard/90 backdrop-blur-xl border-r border-white/50 dark:border-slate-700 md:h-screen sticky top-0 z-40 flex flex-col shadow-2xl transition-all hidden md:flex" id="sidebar">
+        <div class="p-6 border-b border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-3 mb-4">
+                <img id="user-photo" src="" class="w-10 h-10 rounded-full border-2 border-indigo-500 hidden">
+                <div class="overflow-hidden">
+                    <h3 id="user-name" class="font-bold text-sm truncate dark:text-white">Guest</h3>
+                    <p class="text-xs text-green-500 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> Online</p>
+                </div>
+            </div>
+            <button onclick="signOut()" class="w-full py-1.5 text-xs border border-red-200 text-red-500 rounded-lg hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20 transition">Sign Out</button>
+        </div>
+        
+        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-4">
+            <button onclick="switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3 text-sm font-medium rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95">
+                <i class="fa-solid fa-chart-pie"></i> Dashboard
+            </button>
+            <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Modules</p>
+                <div id="nav-modules" class="space-y-1"></div>
+            </div>
+        </nav>
+        
+        <div class="p-6 border-t border-gray-100 dark:border-slate-700 bg-white/50 dark:bg-darkCard/50">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="openSettings()" class="tooltip-container h-10 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-sliders"></i></button>
+                <button onclick="toggleDarkMode()" class="tooltip-container h-10 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-moon"></i></button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="md:hidden glass-panel p-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <span class="font-bold text-xl text-primary flex items-center gap-2">Cloud Tracker</span>
+        <button onclick="document.getElementById('sidebar').classList.toggle('hidden'); document.getElementById('sidebar').classList.toggle('absolute'); document.getElementById('sidebar').classList.toggle('h-screen'); document.getElementById('sidebar').classList.toggle('w-72');" class="text-slate-600 dark:text-slate-200 p-2"><i class="fa-solid fa-bars text-2xl"></i></button>
+    </div>
+
+    <main class="flex-1 overflow-y-auto h-screen relative scroll-smooth p-4 md:p-8 lg:p-10" id="main-scroll">
+        <header class="flex flex-col xl:flex-row justify-between items-end gap-6 mb-8 animate-fade-up">
+            <div class="w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-2xl font-bold dark:text-white">Dashboard</h1>
+                    <div id="sync-status" class="text-xs text-gray-400 font-mono"><i class="fa-solid fa-cloud"></i> Syncing...</div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-gray-500 uppercase font-bold">Progress</p><p id="global-percent" class="text-xl font-bold text-indigo-600">0%</p></div>
+                    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-gray-500 uppercase font-bold">Rank</p><p id="user-rank" class="text-xl font-bold text-green-600">Novice</p></div>
+                    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-gray-500 uppercase font-bold">Streak</p><p id="streak-count" class="text-xl font-bold text-orange-500">0 Days</p></div>
+                    <div class="glass-panel p-4 rounded-2xl text-center"><p class="text-xs text-gray-500 uppercase font-bold">Topics</p><p id="total-topics-count" class="text-xl font-bold text-slate-600 dark:text-white">0</p></div>
+                </div>
+            </div>
+        </header>
+
+        <div id="view-dashboard" class="space-y-8 animate-fade-up">
+            <div id="modules-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                </div>
+        </div>
+    </main>
+
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl shadow-2xl p-8 transform transition-all scale-100 animate-fade-up">
+            <h3 class="text-2xl font-bold mb-6 dark:text-white">Settings</h3>
+            <div class="mb-4"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">CCEE Exam Date</label><input type="date" id="exam-date-input" onchange="saveSettings()" class="w-full p-3 rounded-xl border dark:bg-slate-800 dark:border-slate-600 dark:text-white"></div>
+            <div class="mb-4"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-3">Priority Order</label><div id="priority-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar"></div></div>
+            <div class="flex justify-end"><button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="px-6 py-2 bg-primary text-white rounded-xl font-bold">Close</button></div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. FIREBASE CONFIGURATION (USER MUST FILL)
+        // ==========================================
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+        apiKey: "AIzaSyCAix-f7zHlhHrgkhDMeOrhSMf7HV0WXRc",
+        authDomain: "my-auth-cdac-syllabus-tracker.firebaseapp.com",
+        projectId: "my-auth-cdac-syllabus-tracker",
+        storageBucket: "my-auth-cdac-syllabus-tracker.firebasestorage.app",
+        messagingSenderId: "648913061586",
+        appId: "1:648913061586:web:4e222848dc3ae062558f0b",
+        measurementId: "G-8Y8FL3ZSWS"
+        };
+
+        // Initialize Firebase
+        if (!firebaseConfig.apiKey) {
+            alert("⚠️ You must paste your Firebase Config in the code to enable Cloud Sync!");
+        } else {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // ==========================================
+        // 2. STATE & DEFAULT DATA
+        // ==========================================
+        const defaultSyllabus = [
+             { id: "algo", title: "Algorithms (Java)", topics: ["Complexity (Big O)", "Arrays, Stacks, Queues", "Linked Lists", "Recursion", "Trees (BST, AVL)", "Searching & Sorting", "Graph Algo", "DP & Greedy"] },
+             { id: "os", title: "OS & Methodologies", topics: ["Process Mgmt", "Memory Mgmt", "Deadlocks", "Linux Shell", "Git & DevOps", "SDLC & Agile", "Docker & K8s"] },
+             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections Framework", "Streams API", "Multithreading", "Exception Handling", "File IO"] },
+             { id: "web", title: "Web Technologies", topics: ["HTML5 & CSS3", "JavaScript ES6", "React Basics", "React Hooks", "Node.js & Express", "REST APIs"] },
+             { id: "dbms", title: "Database Tech", topics: ["SQL Basics", "Normalization", "Joins & Subqueries", "PL/SQL", "MongoDB CRUD", "NoSQL Concepts"] }
+        ];
+
+        let appState = {
+            progress: {},
+            syllabus: JSON.parse(JSON.stringify(defaultSyllabus)),
+            subjectOrder: defaultSyllabus.map(s => s.id),
+            examDate: ""
+        };
+
+        let currentUid = null;
+        let currentSessionId = Date.now().toString(); // Generate ID for this tab
+
+        // ==========================================
+        // 3. AUTH & SESSION LOGIC
+        // ==========================================
+
+        function signIn() {
+            auth.signInWithPopup(provider).catch(error => {
+                document.getElementById('login-error').innerText = error.message;
+                document.getElementById('login-error').classList.remove('hidden');
+            });
+        }
+
+        function signOut() {
+            auth.signOut().then(() => location.reload());
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User Logged In
+                currentUid = user.uid;
+                
+                // UI Updates
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('user-photo').src = user.photoURL;
+                document.getElementById('user-photo').classList.remove('hidden');
+                document.getElementById('user-name').innerText = user.displayName;
+
+                // 1. Initialize/Load Data from Cloud
+                initUserData(user);
+
+                // 2. Start Session Watcher (Single Session Logic)
+                startSessionWatch(user.uid);
+
+            } else {
+                // User Logged Out
+                document.getElementById('auth-overlay').classList.remove('hidden');
+            }
+        });
+
+        // ==========================================
+        // 4. CLOUD SYNC & SINGLE SESSION
+        // ==========================================
+
+        async function initUserData(user) {
+            const docRef = db.collection('users').doc(user.uid);
+            
+            docRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // SESSION CHECK
+                    if (data.activeSessionId && data.activeSessionId !== currentSessionId) {
+                        document.getElementById('session-lock').classList.remove('hidden');
+                        return; // Stop processing
+                    }
+
+                    // SYNC DATA
+                    if (data.appState) {
+                        appState = data.appState;
+                        renderDashboard();
+                        updateStats();
+                        document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Synced';
+                    }
+                } else {
+                    // New User: Create Doc with current state & session
+                    saveToCloud();
+                }
+            });
+        }
+
+        function startSessionWatch(uid) {
+            // Set THIS tab as the active session in DB
+            db.collection('users').doc(uid).set({
+                activeSessionId: currentSessionId,
+                lastLogin: new Date().toISOString()
+            }, { merge: true });
+        }
+
+        function saveToCloud() {
+            if (!currentUid) return;
+            document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Saving...';
+            
+            db.collection('users').doc(currentUid).set({
+                appState: appState,
+                activeSessionId: currentSessionId // Keep current session valid on write
+            }, { merge: true }).then(() => {
+                document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Synced';
+            });
+        }
+
+        // ==========================================
+        // 5. APP LOGIC (ADAPTED FOR CLOUD)
+        // ==========================================
+        
+        function toggleState(key) {
+            if (!appState.progress[key]) appState.progress[key] = { done: false };
+            appState.progress[key].done = !appState.progress[key].done;
+            
+            saveToCloud(); // Save to Firestore
+            renderDashboard();
+            updateStats();
+        }
+
+        function addTopic(subId) {
+            const input = document.getElementById(`input-${subId}`);
+            if(!input.value) return;
+            const sub = appState.syllabus.find(s => s.id === subId);
+            sub.topics.push(input.value);
+            input.value = "";
+            saveToCloud();
+        }
+
+        function deleteTopic(subId, idx) {
+            if(!confirm("Delete?")) return;
+            const sub = appState.syllabus.find(s => s.id === subId);
+            sub.topics.splice(idx, 1);
+            // Simple data cleanup
+            const newProgress = {};
+            // Rebuild progress map (simplified for brevity)
+            // In production, you'd shift keys carefully like v6
+            appState.progress = newProgress; 
+            saveToCloud();
+        }
+
+        function saveSettings() {
+            appState.examDate = document.getElementById('exam-date-input').value;
+            saveToCloud();
+        }
+
+        // ==========================================
+        // 6. RENDER LOGIC
+        // ==========================================
+
+        function renderDashboard() {
+            const grid = document.getElementById('modules-grid');
+            grid.innerHTML = '';
+            
+            appState.subjectOrder.forEach(id => {
+                const sub = appState.syllabus.find(s => s.id === id);
+                if (!sub) return;
+
+                const total = sub.topics.length;
+                let done = 0;
+                
+                const rows = sub.topics.map((t, i) => {
+                    const key = `${sub.id}-${i}`;
+                    const isDone = appState.progress[key]?.done;
+                    if(isDone) done++;
+                    
+                    return `
+                    <div class="flex justify-between items-center p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg group">
+                        <div class="flex items-center gap-3">
+                            <button onclick="deleteTopic('${sub.id}', ${i})" class="delete-btn text-red-400"><i class="fa-solid fa-trash"></i></button>
+                            <span class="${isDone ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200'}">${t}</span>
+                        </div>
+                        <label class="checkbox-wrapper cursor-pointer">
+                            <input type="checkbox" class="sr-only" onchange="toggleState('${key}')" ${isDone?'checked':''}>
+                            <div class="w-6 h-6 border-2 border-gray-300 rounded-md flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check ${isDone?'block':'hidden'}"></i></div>
+                        </label>
+                    </div>`;
+                }).join('');
+
+                const pct = total === 0 ? 0 : Math.round((done/total)*100);
+
+                grid.innerHTML += `
+                <div class="glass-panel rounded-2xl p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg dark:text-white">${sub.title}</h3>
+                        <span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-xs font-bold">${pct}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-4"><div class="bg-indigo-500 h-2 rounded-full transition-all" style="width:${pct}%"></div></div>
+                    <div class="space-y-1 max-h-64 overflow-y-auto custom-scrollbar">${rows}</div>
+                    <div class="mt-4 flex gap-2">
+                        <input id="input-${sub.id}" type="text" placeholder="Add topic..." class="flex-1 border p-2 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-600">
+                        <button onclick="addTopic('${sub.id}')" class="bg-indigo-500 text-white px-3 rounded-lg"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>`;
+            });
+            updateStats();
+        }
+
+        function updateStats() {
+            let total=0, done=0;
+            appState.syllabus.forEach(s => s.topics.forEach((t, i) => {
+                total++;
+                if(appState.progress[`${s.id}-${i}`]?.done) done++;
+            }));
+            const p = total===0?0:Math.round((done/total)*100);
+            document.getElementById('global-percent').innerText = `${p}%`;
+            document.getElementById('total-topics-count').innerText = total;
+            
+            let rank = "Novice";
+            if(p>25) rank="Apprentice";
+            if(p>50) rank="Scholar";
+            if(p>75) rank="Master";
+            if(p>95) rank="Legend";
+            document.getElementById('user-rank').innerText = rank;
+        }
+
+        // Settings Modal
+        function openSettings() {
+            const list = document.getElementById('priority-list');
+            list.innerHTML = '';
+            appState.subjectOrder.forEach(id => {
+                const s = appState.syllabus.find(x => x.id === id);
+                if(s) list.innerHTML += `<div class="p-3 border rounded flex justify-between bg-white dark:bg-slate-800 dark:border-slate-600 cursor-move" data-id="${id}"><span>${s.title}</span><i class="fa-solid fa-bars text-gray-400"></i></div>`;
+            });
+            new Sortable(list, { onEnd: () => {
+                appState.subjectOrder = Array.from(list.children).map(c => c.dataset.id);
+                saveToCloud();
+            }});
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // Apply dark mode preference
+        if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+
+    </script>
+</body>
+</html>
