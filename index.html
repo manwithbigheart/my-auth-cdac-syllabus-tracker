@@ -62,20 +62,17 @@
         }
         
         .glass-panel {
-            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
         .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.75); border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .sortable-ghost { opacity: 0.4; background: #e0e7ff; }
         
         .group:hover .delete-btn { opacity: 1; pointer-events: auto; }
         .delete-btn { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-        
-        /* Overlays */
-        #auth-overlay, #session-lock { transition: opacity 0.3s ease; }
         
         html { font-size: 16px; scroll-behavior: smooth; } 
     </style>
@@ -130,18 +127,18 @@
         </div>
 
         <div class="px-6 mt-6 mb-2">
-            <div class="bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-slate-800 p-4 rounded-2xl text-center border border-indigo-100 dark:border-slate-700 shadow-sm">
-                <div class="flex justify-center items-center gap-2 mb-1">
-                    <span id="user-badge-icon" class="text-2xl">🌱</span>
-                    <h3 id="user-rank" class="font-bold text-slate-800 dark:text-white">Novice</h3>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
-                    <div id="sidebar-progress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            <div class="bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-slate-800 p-5 rounded-2xl text-center border border-indigo-100 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-indigo-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                <div id="user-badge-icon" class="text-5xl mb-2 drop-shadow-md transform transition group-hover:scale-110 duration-300">🌱</div>
+                <h3 id="user-rank" class="font-bold text-lg text-slate-800 dark:text-white">Novice</h3>
+                <p id="sidebar-percent" class="text-sm text-indigo-500 dark:text-indigo-400 font-semibold mt-1">0% Mastery</p>
+                <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mt-4 overflow-hidden">
+                    <div id="sidebar-progress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
             </div>
         </div>
 
-        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-4">
+        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-2">
             <button onclick="switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3.5 text-base font-medium rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95">
                 <i class="fa-solid fa-chart-pie"></i> Dashboard
             </button>
@@ -155,9 +152,11 @@
         </nav>
 
         <div class="p-6 border-t border-gray-100 dark:border-slate-700 bg-white/50 dark:bg-darkCard/50">
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-4 gap-2">
                 <button onclick="openSettings()" class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-sliders text-lg"></i><span class="tooltip-text">Settings</span></button>
                 <button onclick="toggleDarkMode()" class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-moon text-lg"></i><span class="tooltip-text">Theme</span></button>
+                <button onclick="exportData()" class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-download text-lg"></i><span class="tooltip-text">Backup</span></button>
+                <label class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition cursor-pointer"><i class="fa-solid fa-upload text-lg"></i><input type="file" class="hidden" onchange="importData(this)"><span class="tooltip-text">Restore</span></label>
             </div>
         </div>
     </aside>
@@ -197,21 +196,22 @@
         </header>
 
         <div id="view-dashboard" class="space-y-8 animate-fade-up" style="animation-delay: 0.1s;">
+            
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-xl shadow-indigo-500/20 p-8 group">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                     <div class="relative z-10">
                         <div class="flex items-center gap-3 mb-4"><span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10"><i class="fa-solid fa-wand-magic-sparkles text-yellow-300 mr-2"></i>AI Recommendation</span></div>
                         <div class="mb-6"><h2 class="text-sm text-indigo-100 opacity-80 uppercase tracking-wide mb-1" id="suggested-subject">Subject</h2><h3 class="text-3xl font-bold leading-tight" id="suggested-topic">Loading...</h3></div>
-                        <button onclick="scrollToTopic()" class="bg-white text-indigo-700 px-8 py-3 rounded-xl font-bold text-base shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all transform hover:-translate-y-1 active:translate-y-0">Start Studying <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                        <button onclick="scrollToTopic()" class="bg-white text-indigo-700 px-8 py-3 rounded-xl font-bold text-base shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all transform hover:-translate-y-1 active:translate-y-0">Start Studying This Topic <i class="fa-solid fa-arrow-right ml-2"></i></button>
                     </div>
                 </div>
 
                 <div class="glass-panel p-8 rounded-3xl flex flex-col justify-center items-center text-center hover:shadow-lg transition-all duration-300 border-t-4 border-yellow-400">
                     <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-2xl shadow-inner"><i class="fa-solid fa-bolt"></i></div>
                     <h3 class="text-xl font-bold text-slate-800 dark:text-white">Flash Review</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 mt-2 px-4">Instantly revise 3 topics you've completed.</p>
-                    <button onclick="startFlashReview()" class="w-full py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-bold text-base shadow-lg shadow-yellow-400/30 transition-transform hover:-translate-y-1">Quick Session</button>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 mt-2 px-4">Instantly revise 3 topics you've completed but haven't reviewed.</p>
+                    <button onclick="startFlashReview()" class="w-full py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-bold text-base shadow-lg shadow-yellow-400/30 transition-transform hover:-translate-y-1">Start Quick Session</button>
                 </div>
             </div>
 
@@ -224,7 +224,7 @@
                     </div>
                 </div>
                 <div id="modules-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    </div>
+                </div>
             </div>
         </div>
 
@@ -244,7 +244,7 @@
             <h3 class="text-2xl font-bold mb-6 dark:text-white">Settings</h3>
             <div class="mb-8"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wide">CCEE Exam Date</label><input type="date" id="exam-date-input" onchange="saveSettings()" class="w-full p-3 rounded-xl border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary outline-none"></div>
             <div class="mb-8"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-3 uppercase tracking-wide">Priority Order (Drag to Reorder)</label><div id="priority-list" class="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div></div>
-            <div class="flex justify-end"><button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition">Close</button></div>
+            <div class="flex justify-end"><button onclick="document.getElementById('settings-modal').classList.add('hidden'); renderDashboard(); recommendNextTopic();" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition">Save & Close</button></div>
         </div>
     </div>
 
@@ -290,14 +290,14 @@
 
         // --- 2. DATA DEFAULTS ---
         const defaultSyllabus = [
-             { id: "algo", title: "Algorithms (Java)", topics: ["Complexity (Big O)", "Arrays, Stacks, Queues", "Linked Lists", "Recursion", "Trees (BST, AVL)", "Searching & Sorting", "Graphs (BFS, DFS)", "Greedy & DP"] },
-             { id: "os", title: "OS & Methodologies", topics: ["OS Concepts", "Linux & Shell", "Process Mgmt", "Memory Mgmt", "Deadlocks", "Git & Version Control", "SDLC & Agile", "DevOps & Docker"] },
-             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections Framework", "Interfaces & Abstract", "Multithreading", "Exception Handling", "File IO"] },
-             { id: "web", title: "Web Technologies", topics: ["HTML5 & CSS3", "JavaScript ES6+", "DOM Manipulation", "React Components", "React Hooks", "Node.js & Express", "REST API Basics"] },
+             { id: "algo", title: "Algorithms (Java)", topics: ["Problem Solving", "Complexity (Big O)", "Arrays, Stacks, Queues", "Linked Lists", "Recursion", "Trees (BST, AVL)", "Searching & Sorting", "Hashing", "Graphs (BFS, DFS)", "Algo Design"] },
+             { id: "os", title: "OS & Methodologies", topics: ["OS Concepts", "Linux & Shell", "Process Mgmt", "Memory Mgmt", "Deadlocks", "Git & Version Control", "SDLC & Agile", "DevOps & Docker", "Testing (Selenium)"] },
+             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections", "Streams API", "Multithreading", "Exception Handling", "File IO", "Serialization"] },
+             { id: "web", title: "Web Tech", topics: ["HTML5 & CSS3", "JavaScript ES6+", "DOM", "React Components", "React Hooks", "Node.js & Express", "REST APIs", "Redux"] },
              { id: "dbms", title: "Database Tech", topics: ["Normalization", "SQL Queries", "Joins", "Procedures & Triggers", "MongoDB CRUD", "NoSQL Concepts"] },
-             { id: "dotnet", title: "MS.Net Tech", topics: [".Net Framework", "C# Basics", "OOP in C#", "LINQ", "Async/Await", "ASP.Net MVC"] },
-             { id: "cpp", title: "C++ Programming", topics: ["Pointers", "Memory Mgmt", "OOP in C++", "Polymorphism", "Templates & STL"] },
-             { id: "aptitude", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation", "Communication Skills"] }
+             { id: "dotnet", title: "MS.Net Tech", topics: [".Net Framework", "C# Basics", "OOP in C#", "LINQ", "Async/Await", "ASP.Net MVC", "Entity Framework"] },
+             { id: "cpp", title: "C++ Programming", topics: ["Pointers", "Memory Mgmt", "OOP in C++", "Polymorphism", "Templates & STL", "Exception Handling"] },
+             { id: "aptitude", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation", "Communication Skills", "Interview Prep"] }
         ];
 
         let appState = {
@@ -307,7 +307,7 @@
             examDate: ""
         };
 
-        const quotes = ["Code is poetry.", "Simplicity is key.", "Keep learning.", "Stay curious.", "Debug with patience."];
+        const quotes = ["Code is poetry.", "Simplicity is key.", "Keep learning.", "Stay curious.", "Debug with patience.", "First solve the problem, then write the code."];
         let currentUid = null;
         let currentSessionId = Date.now().toString();
         let currentModalKey = null;
@@ -344,19 +344,17 @@
                         return;
                     }
                     if(data.appState) {
-                        // Merge logic: ensure we respect cloud data but keep structure
                         appState = data.appState;
-                        // Basic validation to prevent crash if data is corrupted
                         if(!appState.syllabus) appState.syllabus = JSON.parse(JSON.stringify(defaultSyllabus));
                         renderSidebar();
                         renderDashboard();
                         initCountdown();
                         recommendNextTopic();
-                        updateStats();
-                        document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-circle text-[8px] text-green-500"></i> Synced';
+                        updateGamification();
+                        document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-circle text-[8px] text-green-500 animate-pulse"></i> Connected';
                     }
                 } else {
-                    saveToCloud(); // New user
+                    saveToCloud(); 
                 }
             });
         }
@@ -443,7 +441,7 @@
             if (type === 'rev' && appState.progress[key][type]) appState.progress[key].done = true;
             saveToCloud(); 
             // Optimistic update
-            updateStats(); recommendNextTopic(); renderDashboard();
+            updateGamification(); recommendNextTopic(); renderDashboard();
             if(type === 'done' && appState.progress[key].done) {
                  const modId = key.split('-')[0]; const mod = appState.syllabus.find(s => s.id === modId);
                  if(mod && mod.topics.every((t, i) => appState.progress[`${modId}-${i}`]?.done)) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
@@ -473,12 +471,13 @@
             saveToCloud();
         }
 
-        function updateStats() {
+        function updateGamification() {
             let t=0, d=0; appState.syllabus.forEach(s=>s.topics.forEach((x,i)=>{t++; if(appState.progress[`${s.id}-${i}`]?.done)d++}));
             const p = t===0?0:Math.round((d/t)*100); 
             let r="Novice", ic="🌱"; if(p>25){r="Apprentice";ic="🔨"} if(p>50){r="Scholar";ic="📚"} if(p>75){r="Master";ic="⚡"} if(p>95){r="Legend";ic="👑"}
             document.getElementById('user-rank').innerText = r; document.getElementById('user-badge-icon').innerText = ic;
             document.getElementById('sidebar-progress').style.width = `${p}%`;
+            document.getElementById('sidebar-percent').innerText = `${p}% Mastery`;
         }
 
         // --- 6. HELPERS ---
