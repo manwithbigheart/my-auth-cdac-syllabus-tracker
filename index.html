@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PG-DAC Titan Elite</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,6 +20,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
 
     <script>
         tailwind.config = {
@@ -253,6 +258,14 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
+        // 🔔 Notification Permission
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+
         const defaultSyllabus = [
              { id: "algo", title: "Algorithms (Java)", topics: ["Complexity (Big O)", "Arrays, Stacks", "Recursion", "Trees (BST)", "Searching & Sorting", "Graphs", "DP & Greedy"] },
              { id: "os", title: "OS Concepts", topics: ["Process Mgmt", "Memory Mgmt", "Deadlocks", "Linux Shell", "Git & DevOps", "Docker"] },
@@ -371,20 +384,29 @@ window.togglePomoTimer = () => {
     } else {
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
-        pomoState.interval = setInterval(() => {
+        pomoState.interval = setInterval(() => 
+        {
             pomoState.time--;
             updatePomoDisplay();
 
-            if (pomoState.time <= 0) {
+            if (pomoState.time <= 0) 
+            {
                 clearInterval(pomoState.interval);
-                pomoState.active = false;
-
-                // ✅ ONLY THIS
                 startAlarmLoop();
 
-                document.getElementById('pomo-action-btn').innerHTML =
-                    '<i class="fa-solid fa-play ml-1"></i>';
+                // 🔔 SYSTEM NOTIFICATION
+                if ('Notification' in window && Notification.permission === 'granted') 
+            {
+                new Notification
+            ("⏰ Time’s Up!", 
+                {
+                body: "Your focus session is complete.",
+                icon: "/icon-192.png"
+                }
+            );
             }
+            }
+
         }, 1000);
 
         document.getElementById('pomo-action-btn').innerHTML =
@@ -555,6 +577,8 @@ window.togglePomoTimer = () => {
                 document.getElementById('user-name').innerText = user.displayName;
                 db.collection('users').doc(user.uid).set({ activeSessionId: currentSessionId }, { merge: true });
                 initUserData(user);
+                requestNotificationPermission();
+
             }
         });
 
@@ -660,6 +684,15 @@ window.togglePomoTimer = () => {
         }
 
         if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+        // 📱 Register Service Worker for PWA
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("service-worker.js")
+                    .then(() => console.log("Service Worker registered"))
+                    .catch(err => console.error("SW registration failed", err));
+            });
+        }
+
     </script>
     <!-- ================= ALARM MODAL ================= -->
 <div id="alarm-modal" style="
@@ -708,6 +741,5 @@ window.togglePomoTimer = () => {
 
 </body>
 </html>
-
 
 
