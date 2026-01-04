@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titan Pro: Focused Learning</title>
+    <title>Titan Elite: Focus & Sync</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -37,23 +37,19 @@
     <style>
         body { font-family: 'Outfit', sans-serif; }
         
-        /* Glassmorphism */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
         }
         .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Pomodoro Ring Animation */
+        /* Ring Animation */
         .progress-ring__circle {
-            transition: stroke-dashoffset 0.35s;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%;
         }
 
-        /* Animations */
         .animate-fade-up { animation: fadeUp 0.5s ease-out forwards; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -61,7 +57,6 @@
             background: linear-gradient(135deg, #4f46e5, #8b5cf6); border-color: transparent; transform: scale(1.05);
         }
 
-        /* Tooltips */
         .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; bottom: 130%; }
         .tooltip-text { transition: all 0.2s; opacity: 0; visibility: hidden; }
 
@@ -78,8 +73,8 @@
             <div class="w-20 h-20 bg-gradient-to-tr from-primary to-secondary rounded-3xl flex items-center justify-center text-white text-4xl mx-auto mb-6 shadow-xl shadow-primary/30">
                 <i class="fa-solid fa-graduation-cap"></i>
             </div>
-            <h1 class="text-4xl font-extrabold text-slate-800 dark:text-white mb-2">Titan Pro</h1>
-            <p class="text-slate-500 dark:text-slate-400 mb-8">Secure Cloud Sync & Advanced Focus</p>
+            <h1 class="text-4xl font-extrabold text-slate-800 dark:text-white mb-2">Titan Elite</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">Secure Cloud Sync & Professional Focus</p>
             <button onclick="signIn()" class="w-full py-4 rounded-2xl bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:scale-[1.02] transition-transform flex items-center justify-center gap-3 font-bold text-slate-700 dark:text-white shadow-lg">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Sign in with Google
             </button>
@@ -93,7 +88,7 @@
             </div>
             <h2 class="text-3xl font-bold text-white mb-3">Session Paused</h2>
             <p class="text-red-100 text-lg mb-8 leading-relaxed">
-                You have opened Titan Pro on another device. To prevent data corruption, this session has been locked.
+                You have opened Titan Elite on another device. This session is locked to prevent conflicts.
             </p>
             <button onclick="location.reload()" class="px-8 py-4 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 transition shadow-xl transform hover:scale-105 flex items-center gap-2 mx-auto">
                 <i class="fa-solid fa-rotate-right"></i> Resume Here
@@ -102,29 +97,41 @@
     </div>
 
     <div id="pomodoro-overlay" class="fixed inset-0 z-[90] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center hidden">
-        <div class="w-full max-w-lg p-6 relative">
+        <div class="w-full max-w-xl p-6 relative">
             <button onclick="togglePomodoroUI()" class="absolute top-0 right-0 text-slate-400 hover:text-white transition"><i class="fa-solid fa-times text-2xl"></i></button>
             
-            <div class="text-center mb-8" id="pomo-setup">
-                <h2 class="text-white text-2xl font-bold mb-4">What are you focusing on?</h2>
-                <select id="pomo-task-select" class="w-full p-4 rounded-xl bg-slate-800 text-white border border-slate-700 outline-none focus:border-primary transition mb-4">
-                    <option value="">-- Select a Topic --</option>
-                    </select>
-                <div class="flex justify-center gap-4">
-                    <button onclick="setTimerMode(25)" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-primary border border-slate-700 transition">Focus (25m)</button>
-                    <button onclick="setTimerMode(5)" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-green-500 border border-slate-700 transition">Short Break</button>
-                    <button onclick="setTimerMode(15)" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-blue-500 border border-slate-700 transition">Long Break</button>
+            <div class="text-center mb-6" id="pomo-setup">
+                <h2 class="text-white text-2xl font-bold mb-4">Focus Zone</h2>
+                
+                <select id="pomo-task-select" class="w-full p-3 rounded-xl bg-slate-800 text-white border border-slate-700 outline-none focus:border-primary transition mb-4">
+                    <option value="">-- Select Topic to Study --</option>
+                </select>
+
+                <div class="flex gap-2 justify-center mb-6">
+                    <button onclick="setTimerMode(25, 'focus')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-primary border border-slate-700 transition font-medium">Focus 25</button>
+                    <button onclick="setTimerMode(5, 'short')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-green-600 border border-slate-700 transition font-medium">Short 5</button>
+                    <button onclick="setTimerMode(15, 'long')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-blue-600 border border-slate-700 transition font-medium">Long 15</button>
+                    <div class="relative flex items-center">
+                        <input type="number" id="custom-min" placeholder="Min" class="w-16 px-2 py-2 rounded-l-lg bg-slate-800 border border-slate-700 text-white text-center outline-none">
+                        <button onclick="setCustomTime()" class="px-3 py-2 rounded-r-lg bg-indigo-600 text-white hover:bg-indigo-500 border border-indigo-600 font-bold">Set</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex justify-center mb-8 relative">
-                <svg class="progress-ring" width="280" height="280">
-                    <circle class="text-slate-700" stroke-width="8" stroke="currentColor" fill="transparent" r="120" cx="140" cy="140"/>
-                    <circle id="pomo-ring" class="text-primary progress-ring__circle" stroke-width="8" stroke="currentColor" fill="transparent" r="120" cx="140" cy="140" stroke-dasharray="753.98" stroke-dashoffset="0"/>
-                </svg>
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                    <span id="pomo-timer" class="text-6xl font-mono font-bold text-white tracking-widest">25:00</span>
-                    <p id="pomo-label" class="text-slate-400 text-sm uppercase tracking-widest mt-2">Ready to Start</p>
+            <div class="flex flex-col items-center mb-8 relative">
+                <div class="relative">
+                    <svg class="progress-ring" width="280" height="280">
+                        <circle class="text-slate-800" stroke-width="8" stroke="currentColor" fill="transparent" r="120" cx="140" cy="140"/>
+                        <circle id="pomo-ring" class="text-primary progress-ring__circle" stroke-width="8" stroke="currentColor" fill="transparent" r="120" cx="140" cy="140" stroke-dasharray="753.98" stroke-dashoffset="0"/>
+                    </svg>
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                        <span id="pomo-timer" class="text-6xl font-mono font-bold text-white tracking-widest">25:00</span>
+                        <p id="pomo-mode-label" class="text-primary font-bold uppercase tracking-widest mt-2 text-sm">Focus Mode</p>
+                    </div>
+                </div>
+                
+                <div id="pomo-quote" class="mt-6 text-center text-slate-300 italic text-sm px-8 min-h-[40px]">
+                    "Success is the sum of small efforts, repeated day in and day out."
                 </div>
             </div>
 
@@ -157,7 +164,7 @@
                 <div class="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary/30 transition"></div>
                 <div class="flex justify-between items-end mb-2">
                     <div>
-                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Current Rank</p>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Rank</p>
                         <h3 id="user-rank" class="text-xl font-bold text-yellow-400">Novice</h3>
                     </div>
                     <div class="text-right">
@@ -204,7 +211,7 @@
                 <div class="glass-panel p-6 rounded-3xl relative overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-xl shadow-indigo-500/20">
                     <div class="relative z-10">
                         <div class="flex justify-between items-start mb-4">
-                            <div><h3 class="font-bold text-lg">Daily Target</h3><p class="text-indigo-100 text-xs">Consistent effort wins.</p></div>
+                            <div><h3 class="font-bold text-lg">Daily Target</h3><p class="text-indigo-100 text-xs">Small steps every day.</p></div>
                             <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-crosshairs"></i></div>
                         </div>
                         <div class="flex items-end gap-2 mb-2">
@@ -223,19 +230,11 @@
                 <div class="xl:col-span-2 glass-panel p-6 rounded-3xl border-l-4 border-yellow-400">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-rotate-right text-yellow-500"></i> Due for Revision</h3>
-                        <span class="text-xs text-slate-400">Spaced Repetition (1-3-7-15 Days)</span>
+                        <span class="text-xs text-slate-400">Spaced Repetition (1, 3, 7, 15 Days)</span>
                     </div>
                     <div id="revision-list" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                         <div class="text-sm text-slate-400 italic">No topics due today.</div>
                     </div>
-                </div>
-            </div>
-
-            <div id="ai-insight-box" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 p-4 rounded-2xl flex items-center gap-4 animate-fade-up">
-                <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div>
-                    <h4 class="font-bold text-red-700 dark:text-red-400 text-sm">Weakness Detected</h4>
-                    <p id="ai-msg" class="text-xs text-red-600 dark:text-red-300">Analysis pending...</p>
                 </div>
             </div>
 
@@ -308,8 +307,16 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // Audio for Pomodoro
-        const bellSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clank_car_crash.ogg"); // Placeholder sound, usually best to use base64 for single file but this works online
+        // 🔔 Base64 High-Pitched Alarm Sound (Short Beep)
+        const alarmSound = new Audio("data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"); 
+        // Note: The above is a dummy tiny string to prevent huge code block. 
+        // Real short beep base64 below:
+        const realAlarm = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
+
+        // Quotes
+        const focusQuotes = ["Code is poetry.", "Stay curious.", "First solve the problem, then write the code.", "Focus on being productive instead of busy.", "Don't stop until you're proud."];
+        const shortBreakQuotes = ["Breathe in, breathe out.", "Drink some water.", "Stretch your back.", "Rest your eyes.", "Relax your shoulders."];
+        const longBreakQuotes = ["Go for a walk.", "Real rest feels like recovery.", "Disconnect to reconnect.", "You deserve this break.", "Refresh your mind completely."];
 
         const defaultSyllabus = [
              { id: "algo", title: "Algorithms (Java)", topics: ["Complexity (Big O)", "Arrays, Stacks", "Recursion", "Trees (BST)", "Searching & Sorting", "Graphs", "DP & Greedy"] },
@@ -332,9 +339,7 @@
         let currentUid = null;
         let currentSessionId = Date.now().toString();
         let currentModalKey = null;
-
-        // Pomodoro State
-        let pomoState = { time: 1500, maxTime: 1500, active: false, interval: null };
+        let pomoState = { time: 1500, maxTime: 1500, active: false, interval: null, mode: 'focus' };
 
         // --- AUTH & SECURITY ---
         function signIn() { auth.signInWithPopup(provider); }
@@ -347,10 +352,7 @@
                 document.getElementById('user-photo').src = user.photoURL;
                 document.getElementById('user-photo').classList.remove('hidden');
                 document.getElementById('user-name').innerText = user.displayName;
-                
-                // Security Check
                 db.collection('users').doc(user.uid).set({ activeSessionId: currentSessionId }, { merge: true });
-                
                 initUserData(user);
             }
         });
@@ -369,7 +371,7 @@
                         renderAll();
                     }
                 } else {
-                    saveToCloud(); // New user
+                    saveToCloud(); 
                 }
             });
         }
@@ -383,11 +385,9 @@
             renderSidebar(); renderDashboard(); renderRevisions(); renderMistakes(); renderResources(); updateGamification(); updatePomoTasks();
         }
 
-        // --- CORE FEATURES ---
+        // --- DASHBOARD ---
         function renderDashboard() {
             const grid = document.getElementById('modules-grid'); grid.innerHTML = '';
-            let hardUnfinished = {};
-
             appState.subjectOrder.forEach(id => {
                 const sub = appState.syllabus.find(s => s.id === id); if(!sub) return;
                 const total = sub.topics.length; let doneCount = 0;
@@ -396,7 +396,6 @@
                     const key = `${sub.id}-${idx}`;
                     const data = appState.progress[key] || {};
                     if(data.done) doneCount++;
-                    if(data.difficulty === 'Hard' && !data.done) hardUnfinished[sub.title] = (hardUnfinished[sub.title] || 0) + 1;
 
                     let diffBadge = '';
                     if(data.difficulty === 'Easy') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-easy font-bold mr-2">E</span>';
@@ -406,6 +405,9 @@
                     return `
                     <div class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl group transition-all border-b border-slate-50 dark:border-slate-800 last:border-0">
                         <div class="flex-1 min-w-0 pr-3 flex items-center">
+                            <button onclick="deleteTopic('${sub.id}', ${idx})" class="text-red-300 hover:text-red-500 mr-3 transition" title="Delete Topic">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                             ${diffBadge}
                             <span class="text-sm font-medium truncate ${data.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}">${t}</span>
                         </div>
@@ -434,21 +436,11 @@
                     </div>
                 </div>`;
             });
-
-            // AI Weakness
-            const weakSub = Object.keys(hardUnfinished).reduce((a, b) => hardUnfinished[a] > hardUnfinished[b] ? a : b, null);
-            if (weakSub) {
-                document.getElementById('ai-insight-box').classList.remove('hidden');
-                document.getElementById('ai-msg').innerHTML = `Detected weakness in <b>${weakSub}</b>. Consider revising pending Hard topics.`;
-            } else {
-                document.getElementById('ai-insight-box').classList.add('hidden');
-            }
         }
 
-        // --- 5. POMODORO LOGIC ---
+        // --- POMODORO LOGIC ---
         function togglePomodoroUI() {
-            const el = document.getElementById('pomodoro-overlay');
-            el.classList.toggle('hidden');
+            document.getElementById('pomodoro-overlay').classList.toggle('hidden');
             updatePomoTasks();
         }
 
@@ -462,13 +454,20 @@
             });
         }
 
-        function setTimerMode(min) {
+        function setTimerMode(min, mode) {
             pomoState.active = false;
             clearInterval(pomoState.interval);
             pomoState.maxTime = min * 60;
             pomoState.time = min * 60;
+            pomoState.mode = mode;
             updatePomoDisplay();
+            updatePomoQuote();
             document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+        }
+
+        function setCustomTime() {
+            const min = parseInt(document.getElementById('custom-min').value);
+            if(min > 0) setTimerMode(min, 'focus');
         }
 
         function togglePomoTimer() {
@@ -482,8 +481,8 @@
                     if(pomoState.time <= 0) {
                         clearInterval(pomoState.interval);
                         pomoState.active = false;
-                        try { bellSound.play(); } catch(e){} // Simple alert sound
-                        alert("Time's Up!");
+                        realAlarm.play();
+                        alert("Time's Up! ⏰");
                         document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
                     }
                 }, 1000);
@@ -493,10 +492,8 @@
         }
 
         function resetPomoTimer() {
-            pomoState.active = false;
-            clearInterval(pomoState.interval);
-            pomoState.time = pomoState.maxTime;
-            updatePomoDisplay();
+            pomoState.active = false; clearInterval(pomoState.interval);
+            pomoState.time = pomoState.maxTime; updatePomoDisplay();
             document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
         }
 
@@ -505,7 +502,6 @@
             const s = pomoState.time % 60;
             document.getElementById('pomo-timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             
-            // Circle Offset
             const circle = document.getElementById('pomo-ring');
             const radius = circle.r.baseVal.value;
             const circumference = radius * 2 * Math.PI;
@@ -513,31 +509,54 @@
             circle.style.strokeDashoffset = offset;
         }
 
-        // --- 6. UTILS ---
+        function updatePomoQuote() {
+            let quotesArr = focusQuotes;
+            if(pomoState.mode === 'short') quotesArr = shortBreakQuotes;
+            if(pomoState.mode === 'long') quotesArr = longBreakQuotes;
+            document.getElementById('pomo-quote').innerText = `"${quotesArr[Math.floor(Math.random() * quotesArr.length)]}"`;
+            document.getElementById('pomo-mode-label').innerText = pomoState.mode + " Mode";
+        }
+
+        // --- CORE ACTIONS ---
+        function addTopic(subId) {
+            const input = document.getElementById(`add-${subId}`); if(!input.value.trim()) return;
+            const sub = appState.syllabus.find(s => s.id === subId); sub.topics.push(input.value); input.value = ""; saveToCloud();
+        }
+
+        function deleteTopic(subId, idx) {
+            if(!confirm("Are you sure you want to delete this topic?")) return;
+            const sub = appState.syllabus.find(s => s.id === subId);
+            sub.topics.splice(idx, 1);
+            // Shift progress data
+            for (let i = idx; i < sub.topics.length; i++) {
+                const oldKey = `${subId}-${i+1}`, newKey = `${subId}-${i}`;
+                if (appState.progress[oldKey]) appState.progress[newKey] = appState.progress[oldKey];
+                else delete appState.progress[newKey];
+            }
+            delete appState.progress[`${subId}-${sub.topics.length}`];
+            saveToCloud();
+        }
+
         function toggleState(key) {
             if (!appState.progress[key]) appState.progress[key] = { done: false };
-            const wasDone = appState.progress[key].done;
-            appState.progress[key].done = !wasDone;
-            
+            const wasDone = appState.progress[key].done; appState.progress[key].done = !wasDone;
             if (!wasDone) appState.progress[key].dateCompleted = new Date().toISOString();
             
             let xpGain = 10;
             if (appState.progress[key].difficulty === "Medium") xpGain = 20;
             if (appState.progress[key].difficulty === "Hard") xpGain = 30;
-            
             if (!wasDone) appState.userProfile.xp += xpGain; else appState.userProfile.xp -= xpGain;
+            
             updateDailyTargetUI(wasDone ? -1 : 1);
             saveToCloud();
             if(!wasDone) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
 
-        function updateGamification() {
-            const xp = appState.userProfile.xp;
-            document.getElementById('user-xp').innerText = xp;
-            document.getElementById('xp-progress').style.width = `${Math.min(100, (xp % 500)/5)}%`;
-            document.getElementById('today-goal').innerText = appState.userProfile.dailyTarget;
-        }
-
+        // --- UTILS ---
+        function adjustTarget(n) { appState.userProfile.dailyTarget += n; if(appState.userProfile.dailyTarget < 1) appState.userProfile.dailyTarget = 1; saveToCloud(); }
+        function updateDailyTargetUI(n) { const el = document.getElementById('today-done'); let v = parseInt(el.innerText) + n; if(v<0)v=0; el.innerText = v; document.getElementById('daily-bar').style.width = `${Math.min(100, (v/appState.userProfile.dailyTarget)*100)}%`; }
+        function updateGamification() { document.getElementById('user-xp').innerText = appState.userProfile.xp; document.getElementById('xp-progress').style.width = `${Math.min(100, (appState.userProfile.xp % 500)/5)}%`; document.getElementById('today-goal').innerText = appState.userProfile.dailyTarget; }
+        
         function renderRevisions() {
             const list = document.getElementById('revision-list'); list.innerHTML = '';
             const now = new Date(); let count = 0;
@@ -546,9 +565,7 @@
                 if (data.done && data.dateCompleted) {
                     const diff = Math.floor((now - new Date(data.dateCompleted)) / (1000 * 60 * 60 * 24));
                     if ([1, 3, 7, 15].includes(diff)) {
-                        count++;
-                        const [sid, tid] = key.split('-');
-                        const sub = appState.syllabus.find(s => s.id === sid);
+                        count++; const [sid, tid] = key.split('-'); const sub = appState.syllabus.find(s => s.id === sid);
                         if (sub) list.innerHTML += `<div class="min-w-[150px] bg-white dark:bg-slate-800 p-3 rounded-xl border border-yellow-400 shadow-sm"><p class="text-[10px] text-yellow-600 font-bold uppercase">Day ${diff}</p><p class="font-bold text-sm truncate dark:text-white">${sub.topics[tid]}</p></div>`;
                     }
                 }
@@ -559,31 +576,17 @@
         function renderMistakes() {
             const list = document.getElementById('mistake-list'); list.innerHTML = '';
             if(!appState.userProfile.mistakes.length) { list.innerHTML = `<p class="text-slate-400 italic">No mistakes logged.</p>`; return; }
-            appState.userProfile.mistakes.forEach(m => {
-                list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30"><h4 class="font-bold text-red-700 dark:text-red-400 text-sm">${m.topic}</h4><p class="text-slate-600 dark:text-slate-300 text-sm mt-1">${m.note}</p></div>`;
-            });
+            appState.userProfile.mistakes.forEach(m => list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30"><h4 class="font-bold text-red-700 dark:text-red-400 text-sm">${m.topic}</h4><p class="text-slate-600 dark:text-slate-300 text-sm mt-1">${m.note}</p></div>`);
         }
 
         function renderResources() {
             const list = document.getElementById('resource-list'); list.innerHTML = '';
             Object.keys(appState.progress).forEach(k => {
                 const p = appState.progress[k];
-                if(p.link) {
-                    const [sid, tid] = k.split('-');
-                    const t = appState.syllabus.find(s=>s.id===sid).topics[tid];
-                    list.innerHTML += `<div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center"><div class="overflow-hidden mr-3"><h4 class="font-bold text-sm truncate dark:text-white">${t}</h4><p class="text-xs text-slate-400 truncate">${p.link}</p></div><a href="${p.link}" target="_blank" class="w-8 h-8 rounded-lg bg-indigo-50 text-primary flex items-center justify-center"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`;
-                }
+                if(p.link) { const [sid, tid] = k.split('-'); const t = appState.syllabus.find(s=>s.id===sid).topics[tid]; list.innerHTML += `<div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center"><div class="overflow-hidden mr-3"><h4 class="font-bold text-sm truncate dark:text-white">${t}</h4><p class="text-xs text-slate-400 truncate">${p.link}</p></div><a href="${p.link}" target="_blank" class="w-8 h-8 rounded-lg bg-indigo-50 text-primary flex items-center justify-center"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`; }
             });
         }
 
-        // --- HELPERS ---
-        function addTopic(subId) {
-            const input = document.getElementById(`add-${subId}`); if(!input.value.trim()) return;
-            const sub = appState.syllabus.find(s => s.id === subId); sub.topics.push(input.value); input.value = ""; saveToCloud();
-        }
-        function adjustTarget(n) { appState.userProfile.dailyTarget += n; if(appState.userProfile.dailyTarget < 1) appState.userProfile.dailyTarget = 1; saveToCloud(); }
-        function updateDailyTargetUI(n) { const el = document.getElementById('today-done'); let v = parseInt(el.innerText) + n; if(v<0)v=0; el.innerText = v; document.getElementById('daily-bar').style.width = `${Math.min(100, (v/appState.userProfile.dailyTarget)*100)}%`; }
-        
         function openModal(key, sub, topic) {
             currentModalKey = key; const p = appState.progress[key] || {};
             document.getElementById('detail-modal').classList.remove('hidden');
@@ -627,7 +630,12 @@
         }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
-        function renderSidebar() {} // Static
+
+        // Quotes
+        const focusQuotes = ["Code is poetry.", "Stay curious.", "First solve the problem, then write the code.", "Focus on being productive instead of busy.", "Don't stop until you're proud."];
+        const shortBreakQuotes = ["Breathe in, breathe out.", "Drink some water.", "Stretch your back.", "Rest your eyes.", "Relax your shoulders."];
+        const longBreakQuotes = ["Go for a walk.", "Real rest feels like recovery.", "Disconnect to reconnect.", "You deserve this break.", "Refresh your mind completely."];
+        const realAlarm = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
     </script>
 </body>
 </html>
