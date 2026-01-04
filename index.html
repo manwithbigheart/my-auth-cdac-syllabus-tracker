@@ -384,28 +384,6 @@ window.togglePomoTimer = () => {
             if(min > 0) window.setTimerMode(min, 'focus');
         };
 
-        window.togglePomoTimer = () => {
-            if(pomoState.active) {
-                clearInterval(pomoState.interval);
-                document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
-            } else {
-                if(audioCtx.state === 'suspended') audioCtx.resume();
-                pomoState.interval = setInterval(() => {
-                    pomoState.time--;
-                    updatePomoDisplay();
-                    if(pomoState.time <= 0) {
-                        clearInterval(pomoState.interval);
-                        pomoState.active = false;
-                        playHighPitchAlarm();
-                        alert("Time's Up!");
-                        document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
-                    }
-                }, 1000);
-                document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
-            }
-            pomoState.active = !pomoState.active;
-        };
-
         window.resetPomoTimer = () => {
             pomoState.active = false; clearInterval(pomoState.interval);
             pomoState.time = pomoState.maxTime; updatePomoDisplay();
@@ -645,4 +623,5 @@ window.togglePomoTimer = () => {
     </script>
 </body>
 </html>
+
 
