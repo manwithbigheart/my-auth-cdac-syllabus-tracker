@@ -294,27 +294,72 @@
         }
         // ================= ALARM LOOP LOGIC (COPY–PASTE BLOCK) =================
 
-// Alarm interval reference
+// ================= ALARM + VIBRATION + WAKE LOCK =================
+
 let alarmInterval = null;
+let vibrationInterval = null;
+let wakeLock = null;
 
-// Start continuous alarm
-function startAlarmLoop() {
-    // Play immediately
-    playHighPitchAlarm();
-
-    // Repeat alarm every 1 second
-    alarmInterval = setInterval(() => {
-        playHighPitchAlarm();
-    }, 1000);
-}
-
-// Stop alarm completely
-function stopAlarmLoop() {
-    if (alarmInterval !== null) {
-        clearInterval(alarmInterval);
-        alarmInterval = null;
+// 🔒 Prevent screen lock (mobile)
+async function enableWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (e) {
+        console.warn("WakeLock failed", e);
     }
 }
+
+function releaseWakeLock() {
+    if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+}
+
+// 🔔 Start alarm sound + vibration
+function startAlarmLoop() {
+    enableWakeLock();
+
+    playHighPitchAlarm();
+    alarmInterval = setInterval(playHighPitchAlarm, 1000);
+
+    if ('vibrate' in navigator) {
+        navigator.vibrate([500, 300, 500]);
+        vibrationInterval = setInterval(() => {
+            navigator.vibrate([500, 300, 500]);
+        }, 1500);
+    }
+
+    document.getElementById('alarm-modal').style.display = 'flex';
+}
+
+// 📴 Stop everything
+function stopAlarmCompletely() {
+    if (alarmInterval) clearInterval(alarmInterval);
+    if (vibrationInterval) clearInterval(vibrationInterval);
+
+    alarmInterval = null;
+    vibrationInterval = null;
+
+    navigator.vibrate?.(0);
+    releaseWakeLock();
+
+    document.getElementById('alarm-modal').style.display = 'none';
+}
+
+// 😴 Snooze for 5 minutes
+function snoozeAlarm() {
+    stopAlarmCompletely();
+
+    pomoState.time = 5 * 60;
+    pomoState.maxTime = 5 * 60;
+    updatePomoDisplay();
+
+    setTimeout(startAlarmLoop, 5 * 60 * 1000);
+}
+
 
 // ================= TIMER TOGGLE (REPLACE ENTIRE FUNCTION) =================
 
@@ -334,14 +379,8 @@ window.togglePomoTimer = () => {
                 clearInterval(pomoState.interval);
                 pomoState.active = false;
 
-                // 🔔 START CONTINUOUS BEEP
+                // ✅ ONLY THIS
                 startAlarmLoop();
-
-                // ⛔ BLOCK UI UNTIL USER CLICKS OK
-                alert("⏰ Time's Up! Click OK to stop the alarm.");
-
-                // 🔕 STOP BEEP AFTER OK
-                stopAlarmLoop();
 
                 document.getElementById('pomo-action-btn').innerHTML =
                     '<i class="fa-solid fa-play ml-1"></i>';
@@ -354,6 +393,7 @@ window.togglePomoTimer = () => {
 
     pomoState.active = !pomoState.active;
 };
+
 
 // ================= END OF BLOCK =================
 
@@ -621,7 +661,53 @@ window.togglePomoTimer = () => {
 
         if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
     </script>
+    <!-- ================= ALARM MODAL ================= -->
+<div id="alarm-modal" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+">
+    <div style="
+        background: white;
+        padding: 28px;
+        border-radius: 18px;
+        text-align: center;
+        width: 90%;
+        max-width: 320px;
+    ">
+        <h2 style="font-size:22px;margin-bottom:12px;">⏰ Time's Up!</h2>
+        <p style="font-size:14px;color:#555;margin-bottom:20px;">
+            Alarm is active
+        </p>
+
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button onclick="snoozeAlarm()" style="
+                background:#f59e0b;
+                color:white;
+                padding:12px 18px;
+                border:none;
+                border-radius:10px;
+                font-size:14px;
+            ">Snooze 5 min</button>
+
+            <button onclick="stopAlarmCompletely()" style="
+                background:#4f46e5;
+                color:white;
+                padding:12px 18px;
+                border:none;
+                border-radius:10px;
+                font-size:14px;
+            ">Stop</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
+
 
 
