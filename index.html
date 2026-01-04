@@ -292,6 +292,71 @@
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 1);
         }
+        // ================= ALARM LOOP LOGIC (COPY–PASTE BLOCK) =================
+
+// Alarm interval reference
+let alarmInterval = null;
+
+// Start continuous alarm
+function startAlarmLoop() {
+    // Play immediately
+    playHighPitchAlarm();
+
+    // Repeat alarm every 1 second
+    alarmInterval = setInterval(() => {
+        playHighPitchAlarm();
+    }, 1000);
+}
+
+// Stop alarm completely
+function stopAlarmLoop() {
+    if (alarmInterval !== null) {
+        clearInterval(alarmInterval);
+        alarmInterval = null;
+    }
+}
+
+// ================= TIMER TOGGLE (REPLACE ENTIRE FUNCTION) =================
+
+window.togglePomoTimer = () => {
+    if (pomoState.active) {
+        clearInterval(pomoState.interval);
+        document.getElementById('pomo-action-btn').innerHTML =
+            '<i class="fa-solid fa-play ml-1"></i>';
+    } else {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        pomoState.interval = setInterval(() => {
+            pomoState.time--;
+            updatePomoDisplay();
+
+            if (pomoState.time <= 0) {
+                clearInterval(pomoState.interval);
+                pomoState.active = false;
+
+                // 🔔 START CONTINUOUS BEEP
+                startAlarmLoop();
+
+                // ⛔ BLOCK UI UNTIL USER CLICKS OK
+                alert("⏰ Time's Up! Click OK to stop the alarm.");
+
+                // 🔕 STOP BEEP AFTER OK
+                stopAlarmLoop();
+
+                document.getElementById('pomo-action-btn').innerHTML =
+                    '<i class="fa-solid fa-play ml-1"></i>';
+            }
+        }, 1000);
+
+        document.getElementById('pomo-action-btn').innerHTML =
+            '<i class="fa-solid fa-pause"></i>';
+    }
+
+    pomoState.active = !pomoState.active;
+};
+
+// ================= END OF BLOCK =================
+
 
         // --- GLOBAL FUNCTIONS ATTACHED TO WINDOW ---
         window.signIn = () => {
@@ -580,3 +645,4 @@
     </script>
 </body>
 </html>
+
