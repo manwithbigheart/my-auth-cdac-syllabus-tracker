@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titan Elite: Focus & Sync</title>
+    <title>PG-DAC Titan Elite</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -38,14 +38,13 @@
         body { font-family: 'Outfit', sans-serif; }
         
         .glass-panel {
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
         }
         .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Ring Animation */
         .progress-ring__circle {
             transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%;
         }
@@ -60,24 +59,27 @@
         .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; bottom: 130%; }
         .tooltip-text { transition: all 0.2s; opacity: 0; visibility: hidden; }
 
-        /* Badge Styles */
         .badge-easy { @apply bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400; }
         .badge-medium { @apply bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400; }
         .badge-hard { @apply bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400; }
+        
+        /* Ensure inputs are clickable */
+        input, textarea, select { z-index: 10; position: relative; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden transition-colors duration-300">
 
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center">
         <div class="glass-panel p-10 rounded-3xl shadow-2xl max-w-md w-full text-center animate-fade-up">
-            <div class="w-20 h-20 bg-gradient-to-tr from-primary to-secondary rounded-3xl flex items-center justify-center text-white text-4xl mx-auto mb-6 shadow-xl shadow-primary/30">
+            <div class="w-20 h-20 bg-gradient-to-tr from-primary to-secondary rounded-3xl flex items-center justify-center text-white text-4xl mx-auto mb-6 shadow-xl">
                 <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <h1 class="text-4xl font-extrabold text-slate-800 dark:text-white mb-2">Titan Elite</h1>
-            <p class="text-slate-500 dark:text-slate-400 mb-8">Secure Cloud Sync & Professional Focus</p>
-            <button onclick="signIn()" class="w-full py-4 rounded-2xl bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:scale-[1.02] transition-transform flex items-center justify-center gap-3 font-bold text-slate-700 dark:text-white shadow-lg">
+            <p class="text-slate-500 dark:text-slate-400 mb-8">Secure Cloud Sync & Focus</p>
+            <button onclick="window.signIn()" class="w-full py-4 rounded-2xl bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:scale-[1.02] transition-transform flex items-center justify-center gap-3 font-bold text-slate-700 dark:text-white shadow-lg cursor-pointer">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Sign in with Google
             </button>
+            <p id="auth-error" class="text-red-500 text-sm mt-4 hidden"></p>
         </div>
     </div>
 
@@ -87,10 +89,8 @@
                 <i class="fa-solid fa-lock text-5xl text-white"></i>
             </div>
             <h2 class="text-3xl font-bold text-white mb-3">Session Paused</h2>
-            <p class="text-red-100 text-lg mb-8 leading-relaxed">
-                You have opened Titan Elite on another device. This session is locked to prevent conflicts.
-            </p>
-            <button onclick="location.reload()" class="px-8 py-4 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 transition shadow-xl transform hover:scale-105 flex items-center gap-2 mx-auto">
+            <p class="text-red-100 text-lg mb-8">You opened the tracker on another device. This session is locked.</p>
+            <button onclick="location.reload()" class="px-8 py-4 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 transition shadow-xl transform hover:scale-105 mx-auto flex items-center gap-2">
                 <i class="fa-solid fa-rotate-right"></i> Resume Here
             </button>
         </div>
@@ -98,22 +98,21 @@
 
     <div id="pomodoro-overlay" class="fixed inset-0 z-[90] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center hidden">
         <div class="w-full max-w-xl p-6 relative">
-            <button onclick="togglePomodoroUI()" class="absolute top-0 right-0 text-slate-400 hover:text-white transition"><i class="fa-solid fa-times text-2xl"></i></button>
+            <button onclick="window.togglePomodoroUI()" class="absolute top-0 right-0 text-slate-400 hover:text-white transition p-2"><i class="fa-solid fa-times text-2xl"></i></button>
             
-            <div class="text-center mb-6" id="pomo-setup">
+            <div class="text-center mb-6">
                 <h2 class="text-white text-2xl font-bold mb-4">Focus Zone</h2>
-                
                 <select id="pomo-task-select" class="w-full p-3 rounded-xl bg-slate-800 text-white border border-slate-700 outline-none focus:border-primary transition mb-4">
-                    <option value="">-- Select Topic to Study --</option>
+                    <option value="">-- Select Topic --</option>
                 </select>
 
-                <div class="flex gap-2 justify-center mb-6">
-                    <button onclick="setTimerMode(25, 'focus')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-primary border border-slate-700 transition font-medium">Focus 25</button>
-                    <button onclick="setTimerMode(5, 'short')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-green-600 border border-slate-700 transition font-medium">Short 5</button>
-                    <button onclick="setTimerMode(15, 'long')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-blue-600 border border-slate-700 transition font-medium">Long 15</button>
+                <div class="flex gap-2 justify-center mb-6 flex-wrap">
+                    <button onclick="window.setTimerMode(25, 'focus')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-primary border border-slate-700 transition">Focus 25</button>
+                    <button onclick="window.setTimerMode(5, 'short')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-green-600 border border-slate-700 transition">Short 5</button>
+                    <button onclick="window.setTimerMode(15, 'long')" class="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-blue-600 border border-slate-700 transition">Long 15</button>
                     <div class="relative flex items-center">
                         <input type="number" id="custom-min" placeholder="Min" class="w-16 px-2 py-2 rounded-l-lg bg-slate-800 border border-slate-700 text-white text-center outline-none">
-                        <button onclick="setCustomTime()" class="px-3 py-2 rounded-r-lg bg-indigo-600 text-white hover:bg-indigo-500 border border-indigo-600 font-bold">Set</button>
+                        <button onclick="window.setCustomTime()" class="px-3 py-2 rounded-r-lg bg-indigo-600 text-white hover:bg-indigo-500 font-bold">Set</button>
                     </div>
                 </div>
             </div>
@@ -126,22 +125,15 @@
                     </svg>
                     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
                         <span id="pomo-timer" class="text-6xl font-mono font-bold text-white tracking-widest">25:00</span>
-                        <p id="pomo-mode-label" class="text-primary font-bold uppercase tracking-widest mt-2 text-sm">Focus Mode</p>
+                        <p id="pomo-mode-label" class="text-primary font-bold uppercase tracking-widest mt-2 text-sm">Focus</p>
                     </div>
                 </div>
-                
-                <div id="pomo-quote" class="mt-6 text-center text-slate-300 italic text-sm px-8 min-h-[40px]">
-                    "Success is the sum of small efforts, repeated day in and day out."
-                </div>
+                <div id="pomo-quote" class="mt-6 text-center text-slate-300 italic text-sm px-8 min-h-[40px]">"Ready to focus?"</div>
             </div>
 
             <div class="flex justify-center gap-6">
-                <button onclick="togglePomoTimer()" id="pomo-action-btn" class="w-16 h-16 rounded-full bg-white text-primary flex items-center justify-center text-2xl hover:scale-110 transition shadow-lg shadow-white/20">
-                    <i class="fa-solid fa-play ml-1"></i>
-                </button>
-                <button onclick="resetPomoTimer()" class="w-16 h-16 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xl hover:text-white transition border border-slate-700">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </button>
+                <button onclick="window.togglePomoTimer()" id="pomo-action-btn" class="w-16 h-16 rounded-full bg-white text-primary flex items-center justify-center text-2xl hover:scale-110 transition shadow-lg"><i class="fa-solid fa-play ml-1"></i></button>
+                <button onclick="window.resetPomoTimer()" class="w-16 h-16 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xl hover:text-white transition border border-slate-700"><i class="fa-solid fa-rotate-left"></i></button>
             </div>
         </div>
     </div>
@@ -152,49 +144,29 @@
                 <img id="user-photo" src="" class="w-12 h-12 rounded-full border-2 border-primary p-0.5 hidden object-cover">
                 <div class="overflow-hidden">
                     <h3 id="user-name" class="font-bold text-sm truncate dark:text-white">Guest</h3>
-                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Sync Active
-                    </p>
+                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-wider flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Connected</p>
                 </div>
             </div>
         </div>
-
         <div class="px-4 mt-6">
-            <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-transform">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-primary/30 transition"></div>
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-primary/20 rounded-full blur-2xl -mr-12 -mt-12"></div>
                 <div class="flex justify-between items-end mb-2">
-                    <div>
-                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Rank</p>
-                        <h3 id="user-rank" class="text-xl font-bold text-yellow-400">Novice</h3>
-                    </div>
-                    <div class="text-right">
-                        <span id="user-xp" class="text-2xl font-bold">0</span> <span class="text-xs text-slate-400">XP</span>
-                    </div>
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Rank</p><h3 id="user-rank" class="text-xl font-bold text-yellow-400">Novice</h3></div>
+                    <div class="text-right"><span id="user-xp" class="text-2xl font-bold">0</span> <span class="text-xs text-slate-400">XP</span></div>
                 </div>
-                <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                    <div id="xp-progress" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
+                <div class="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden"><div id="xp-progress" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div></div>
             </div>
         </div>
-
         <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-6">
-            <button onclick="switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/30 font-semibold transition hover:scale-[1.02]">
-                <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
-            </button>
-            <button onclick="togglePomodoroUI()" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium">
-                <i class="fa-solid fa-clock w-5"></i> Focus Mode
-            </button>
-            <button onclick="switchView('mistakes')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium">
-                <i class="fa-solid fa-triangle-exclamation w-5"></i> Mistakes
-            </button>
-            <button onclick="switchView('resources')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium">
-                <i class="fa-solid fa-bookmark w-5"></i> Resources
-            </button>
+            <button onclick="window.switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl bg-primary text-white shadow-lg font-semibold transition hover:scale-[1.02]"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
+            <button onclick="window.togglePomodoroUI()" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium"><i class="fa-solid fa-clock w-5"></i> Focus Mode</button>
+            <button onclick="window.switchView('mistakes')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium"><i class="fa-solid fa-triangle-exclamation w-5"></i> Mistakes</button>
+            <button onclick="window.switchView('resources')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium"><i class="fa-solid fa-bookmark w-5"></i> Resources</button>
         </nav>
-
         <div class="p-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-2">
-            <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition"><i class="fa-solid fa-moon"></i></button>
-            <button onclick="signOut()" class="p-2 rounded-lg hover:bg-red-50 text-red-500 dark:hover:bg-red-900/20 transition"><i class="fa-solid fa-power-off"></i></button>
+            <button onclick="window.toggleDarkMode()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition"><i class="fa-solid fa-moon"></i></button>
+            <button onclick="window.signOut()" class="p-2 rounded-lg hover:bg-red-50 text-red-500 dark:hover:bg-red-900/20 transition"><i class="fa-solid fa-power-off"></i></button>
         </div>
     </aside>
 
@@ -204,61 +176,39 @@
     </div>
 
     <main class="flex-1 overflow-y-auto h-screen relative scroll-smooth p-4 md:p-8 pt-20 md:pt-8" id="main-scroll">
-        
         <div id="view-dashboard" class="space-y-8 animate-fade-up">
-            
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div class="glass-panel p-6 rounded-3xl relative overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-xl shadow-indigo-500/20">
+                <div class="glass-panel p-6 rounded-3xl relative overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-xl">
                     <div class="relative z-10">
-                        <div class="flex justify-between items-start mb-4">
-                            <div><h3 class="font-bold text-lg">Daily Target</h3><p class="text-indigo-100 text-xs">Small steps every day.</p></div>
-                            <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-crosshairs"></i></div>
-                        </div>
-                        <div class="flex items-end gap-2 mb-2">
-                            <span id="today-done" class="text-4xl font-bold">0</span>
-                            <span class="text-lg text-indigo-200 mb-1">/ <span id="today-goal">5</span> topics</span>
-                        </div>
+                        <div class="flex justify-between items-start mb-4"><div><h3 class="font-bold text-lg">Daily Target</h3><p class="text-indigo-100 text-xs">Small steps.</p></div><div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-crosshairs"></i></div></div>
+                        <div class="flex items-end gap-2 mb-2"><span id="today-done" class="text-4xl font-bold">0</span><span class="text-lg text-indigo-200 mb-1">/ <span id="today-goal">5</span> topics</span></div>
                         <div class="w-full bg-black/20 rounded-full h-2 mb-4"><div id="daily-bar" class="bg-white h-2 rounded-full transition-all duration-500" style="width: 0%"></div></div>
                         <div class="flex gap-2">
-                            <button onclick="adjustTarget(-1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm">-</button>
-                            <button onclick="adjustTarget(1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm">+</button>
+                            <button onclick="window.adjustTarget(-1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm">-</button>
+                            <button onclick="window.adjustTarget(1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm">+</button>
                         </div>
                     </div>
                     <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
                 </div>
-
                 <div class="xl:col-span-2 glass-panel p-6 rounded-3xl border-l-4 border-yellow-400">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-rotate-right text-yellow-500"></i> Due for Revision</h3>
-                        <span class="text-xs text-slate-400">Spaced Repetition (1, 3, 7, 15 Days)</span>
-                    </div>
-                    <div id="revision-list" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                        <div class="text-sm text-slate-400 italic">No topics due today.</div>
-                    </div>
+                    <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-rotate-right text-yellow-500"></i> Due for Revision</h3><span class="text-xs text-slate-400">Spaced Repetition</span></div>
+                    <div id="revision-list" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"><div class="text-sm text-slate-400 italic">No topics due today.</div></div>
                 </div>
             </div>
-
+            <div id="ai-insight-box" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 p-4 rounded-2xl flex items-center gap-4 animate-fade-up">
+                <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div><h4 class="font-bold text-red-700 dark:text-red-400 text-sm">Weakness Detected</h4><p id="ai-msg" class="text-xs text-red-600 dark:text-red-300">Analysis pending...</p></div>
+            </div>
             <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Syllabus Tracker</h2>
-                    <button onclick="openSettings()" class="text-sm text-primary hover:underline">Reorder Subjects</button>
-                </div>
+                <div class="flex justify-between items-center"><h2 class="text-xl font-bold text-slate-800 dark:text-white">Syllabus Tracker</h2><button onclick="window.openSettings()" class="text-sm text-primary hover:underline">Reorder</button></div>
                 <div id="modules-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
             </div>
         </div>
-
         <div id="view-mistakes" class="hidden space-y-6 animate-fade-up">
-            <div class="glass-panel p-8 rounded-3xl border-l-4 border-red-500">
-                <h2 class="text-2xl font-bold dark:text-white mb-2">Mistake Notebook</h2>
-                <div id="mistake-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
-            </div>
+            <div class="glass-panel p-8 rounded-3xl border-l-4 border-red-500"><h2 class="text-2xl font-bold dark:text-white mb-2">Mistake Notebook</h2><div id="mistake-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div></div>
         </div>
-
         <div id="view-resources" class="hidden space-y-6 animate-fade-up">
-            <div class="glass-panel p-8 rounded-3xl">
-                <h2 class="text-2xl font-bold dark:text-white mb-6">Resource Hub</h2>
-                <div id="resource-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
+            <div class="glass-panel p-8 rounded-3xl"><h2 class="text-2xl font-bold dark:text-white mb-6">Resource Hub</h2><div id="resource-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
         </div>
     </main>
 
@@ -272,10 +222,7 @@
 
     <div id="detail-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl shadow-2xl p-6 transform scale-100 transition-all">
-            <div class="flex justify-between items-start mb-4">
-                <div><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Edit Topic</span><h3 id="modal-topic-title" class="text-xl font-bold dark:text-white">Topic</h3></div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
-            </div>
+            <div class="flex justify-between items-start mb-4"><div><span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Edit Topic</span><h3 id="modal-topic-title" class="text-xl font-bold dark:text-white">Topic</h3></div><button onclick="window.closeModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button></div>
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">Difficulty</label><select id="modal-difficulty" class="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 text-sm dark:text-white"><option value="Easy">🟢 Easy</option><option value="Medium">🟡 Medium</option><option value="Hard">🔴 Hard</option></select></div>
@@ -288,12 +235,11 @@
                     <input type="text" id="modal-mistake-text" class="w-full mt-2 p-2 text-xs bg-white dark:bg-slate-800 rounded border border-red-200 hidden" placeholder="Describe error...">
                 </div>
             </div>
-            <div class="mt-6 flex justify-end"><button onclick="saveModalDetails()" class="px-6 py-2 bg-primary text-white rounded-xl font-bold shadow-lg hover:bg-indigo-600">Save</button></div>
+            <div class="mt-6 flex justify-end"><button onclick="window.saveModalDetails()" class="px-6 py-2 bg-primary text-white rounded-xl font-bold shadow-lg hover:bg-indigo-600">Save</button></div>
         </div>
     </div>
 
     <script>
-        // --- CONFIG & INIT ---
         const firebaseConfig = {
             apiKey: "AIzaSyDrgpLSWCTW1Qgh4ZG6qOoBUbFRgcY0gyM",
             authDomain: "pg-dac-tracker.firebaseapp.com",
@@ -307,17 +253,6 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // 🔔 Base64 High-Pitched Alarm Sound (Short Beep)
-        const alarmSound = new Audio("data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"); 
-        // Note: The above is a dummy tiny string to prevent huge code block. 
-        // Real short beep base64 below:
-        const realAlarm = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
-
-        // Quotes
-        const focusQuotes = ["Code is poetry.", "Stay curious.", "First solve the problem, then write the code.", "Focus on being productive instead of busy.", "Don't stop until you're proud."];
-        const shortBreakQuotes = ["Breathe in, breathe out.", "Drink some water.", "Stretch your back.", "Rest your eyes.", "Relax your shoulders."];
-        const longBreakQuotes = ["Go for a walk.", "Real rest feels like recovery.", "Disconnect to reconnect.", "You deserve this break.", "Refresh your mind completely."];
-
         const defaultSyllabus = [
              { id: "algo", title: "Algorithms (Java)", topics: ["Complexity (Big O)", "Arrays, Stacks", "Recursion", "Trees (BST)", "Searching & Sorting", "Graphs", "DP & Greedy"] },
              { id: "os", title: "OS Concepts", topics: ["Process Mgmt", "Memory Mgmt", "Deadlocks", "Linux Shell", "Git & DevOps", "Docker"] },
@@ -326,24 +261,207 @@
              { id: "dbms", title: "Database Tech", topics: ["SQL Queries", "Normalization", "Joins", "MongoDB", "NoSQL"] },
              { id: "dotnet", title: "MS.Net Tech", topics: [".Net Framework", "C# Basics", "LINQ", "Async/Await", "ASP.Net MVC"] },
              { id: "cpp", title: "C++ Programming", topics: ["Pointers", "OOP in C++", "Polymorphism", "Templates & STL"] },
-             { id: "apt", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation"] }
+             { id: "apt", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation"] },
+             { id: "java_web", title: "Web-based Java", topics: ["JDBC", "Servlets", "JSP", "Hibernate", "Spring Boot", "Microservices"] }
         ];
 
         let appState = {
-            progress: {},
-            syllabus: JSON.parse(JSON.stringify(defaultSyllabus)),
-            subjectOrder: defaultSyllabus.map(s => s.id),
-            userProfile: { xp: 0, dailyTarget: 5, mistakes: [] }
+            progress: {}, syllabus: JSON.parse(JSON.stringify(defaultSyllabus)), subjectOrder: defaultSyllabus.map(s => s.id), userProfile: { xp: 0, dailyTarget: 5, mistakes: [] }
         };
 
-        let currentUid = null;
-        let currentSessionId = Date.now().toString();
-        let currentModalKey = null;
+        // Quotes
+        const focusQuotes = ["Focus on being productive instead of busy.", "Don't stop until you're proud.", "Deep work matters.", "One step at a time.", "Build your future now."];
+        const shortBreakQuotes = ["Relax your shoulders.", "Drink water.", "Look away from the screen.", "Deep breaths.", "Stretch."];
+        const longBreakQuotes = ["Disconnect to reconnect.", "Go for a walk.", "Clear your mind.", "Rest is productive.", "Recharge."];
+
+        let currentUid = null, currentSessionId = Date.now().toString(), currentModalKey = null;
         let pomoState = { time: 1500, maxTime: 1500, active: false, interval: null, mode: 'focus' };
 
-        // --- AUTH & SECURITY ---
-        function signIn() { auth.signInWithPopup(provider); }
-        function signOut() { auth.signOut().then(() => location.reload()); }
+        // Audio Context for High Pitch Alarm
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playHighPitchAlarm() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch (A5)
+            oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 1);
+        }
+
+        // --- GLOBAL FUNCTIONS ATTACHED TO WINDOW ---
+        window.signIn = () => {
+            auth.signInWithPopup(provider).catch(e => {
+                document.getElementById('auth-error').innerText = e.message;
+                document.getElementById('auth-error').classList.remove('hidden');
+            });
+        };
+        window.signOut = () => auth.signOut().then(() => location.reload());
+        
+        window.togglePomodoroUI = () => {
+            document.getElementById('pomodoro-overlay').classList.toggle('hidden');
+            updatePomoTasks();
+        };
+
+        window.setTimerMode = (min, mode) => {
+            pomoState.active = false; clearInterval(pomoState.interval);
+            pomoState.maxTime = min * 60; pomoState.time = min * 60; pomoState.mode = mode;
+            updatePomoDisplay(); updatePomoQuote();
+            document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+        };
+
+        window.setCustomTime = () => {
+            const min = parseInt(document.getElementById('custom-min').value);
+            if(min > 0) window.setTimerMode(min, 'focus');
+        };
+
+        window.togglePomoTimer = () => {
+            if(pomoState.active) {
+                clearInterval(pomoState.interval);
+                document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+            } else {
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                pomoState.interval = setInterval(() => {
+                    pomoState.time--;
+                    updatePomoDisplay();
+                    if(pomoState.time <= 0) {
+                        clearInterval(pomoState.interval);
+                        pomoState.active = false;
+                        playHighPitchAlarm();
+                        alert("Time's Up!");
+                        document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+                    }
+                }, 1000);
+                document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }
+            pomoState.active = !pomoState.active;
+        };
+
+        window.resetPomoTimer = () => {
+            pomoState.active = false; clearInterval(pomoState.interval);
+            pomoState.time = pomoState.maxTime; updatePomoDisplay();
+            document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+        };
+
+        window.toggleState = (key) => {
+            if (!appState.progress[key]) appState.progress[key] = { done: false };
+            const wasDone = appState.progress[key].done;
+            appState.progress[key].done = !wasDone;
+            if(!wasDone) appState.progress[key].dateCompleted = new Date().toISOString();
+            
+            let xp = 10;
+            if(appState.progress[key].difficulty === 'Medium') xp = 20;
+            if(appState.progress[key].difficulty === 'Hard') xp = 30;
+            
+            if(!wasDone) appState.userProfile.xp += xp; else appState.userProfile.xp -= xp;
+            window.updateDailyTargetUI(wasDone ? -1 : 1);
+            saveToCloud();
+            if(!wasDone) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        };
+
+        window.deleteTopic = (subId, idx) => {
+            if(!confirm("Delete topic? This cannot be undone.")) return;
+            const sub = appState.syllabus.find(s => s.id === subId);
+            sub.topics.splice(idx, 1);
+            // Re-index keys
+            const newProgress = {};
+            Object.keys(appState.progress).forEach(key => {
+                const [sid, iStr] = key.split('-');
+                const i = parseInt(iStr);
+                if(sid === subId) {
+                    if(i < idx) newProgress[key] = appState.progress[key];
+                    if(i > idx) newProgress[`${sid}-${i-1}`] = appState.progress[key];
+                } else {
+                    newProgress[key] = appState.progress[key];
+                }
+            });
+            appState.progress = newProgress;
+            saveToCloud();
+        };
+
+        window.addTopic = (subId) => {
+            const input = document.getElementById(`add-${subId}`);
+            if(!input.value.trim()) return;
+            const sub = appState.syllabus.find(s => s.id === subId);
+            sub.topics.push(input.value);
+            input.value = "";
+            saveToCloud();
+        };
+
+        window.openModal = (key, sub, topic) => {
+            currentModalKey = key;
+            const p = appState.progress[key] || {};
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.getElementById('modal-topic-title').innerText = topic;
+            document.getElementById('modal-difficulty').value = p.difficulty || "Easy";
+            document.getElementById('modal-time').value = p.time || "";
+            document.getElementById('modal-notes').value = p.note || "";
+            document.getElementById('modal-link').value = p.link || "";
+            document.getElementById('modal-mistake-check').checked = false;
+            document.getElementById('modal-mistake-text').classList.add('hidden');
+            document.getElementById('modal-mistake-check').onchange = (e) => document.getElementById('modal-mistake-text').classList.toggle('hidden', !e.target.checked);
+        };
+
+        window.saveModalDetails = () => {
+            if(!currentModalKey) return;
+            if(!appState.progress[currentModalKey]) appState.progress[currentModalKey] = {done: false};
+            const p = appState.progress[currentModalKey];
+            p.difficulty = document.getElementById('modal-difficulty').value;
+            p.time = document.getElementById('modal-time').value;
+            p.note = document.getElementById('modal-notes').value;
+            p.link = document.getElementById('modal-link').value;
+            if(document.getElementById('modal-mistake-check').checked) {
+                const txt = document.getElementById('modal-mistake-text').value;
+                if(txt) appState.userProfile.mistakes.push({ topic: document.getElementById('modal-topic-title').innerText, note: txt });
+            }
+            saveToCloud();
+            window.closeModal();
+        };
+
+        window.closeModal = () => document.getElementById('detail-modal').classList.add('hidden');
+        window.switchView = (v) => {
+            ['dashboard','mistakes','resources'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
+            document.getElementById(`view-${v}`).classList.remove('hidden');
+            if(v==='resources') renderResources(); if(v==='mistakes') renderMistakes();
+            if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
+        };
+        window.openSettings = () => {
+            const list = document.getElementById('priority-list'); list.innerHTML = '';
+            appState.subjectOrder.forEach(id => {
+                const s = appState.syllabus.find(x => x.id === id);
+                if(s) list.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-600 rounded-lg flex justify-between items-center cursor-move" data-id="${id}"><span class="font-bold text-sm dark:text-white">${s.title}</span><i class="fa-solid fa-bars text-slate-400"></i></div>`;
+            });
+            document.getElementById('settings-modal').classList.remove('hidden');
+            new Sortable(list, { onEnd: () => { appState.subjectOrder = Array.from(list.children).map(c => c.dataset.id); saveToCloud(); } });
+        };
+        window.toggleDarkMode = () => document.documentElement.classList.toggle('dark');
+        window.adjustTarget = (n) => { appState.userProfile.dailyTarget += n; if(appState.userProfile.dailyTarget < 1) appState.userProfile.dailyTarget = 1; saveToCloud(); };
+        window.updateDailyTargetUI = (n) => { const el = document.getElementById('today-done'); let v = parseInt(el.innerText) + n; if(v<0)v=0; el.innerText = v; document.getElementById('daily-bar').style.width = `${Math.min(100, (v/appState.userProfile.dailyTarget)*100)}%`; };
+
+        // --- INTERNAL LOGIC ---
+        function updatePomoTasks() {
+            const select = document.getElementById('pomo-task-select');
+            select.innerHTML = '<option value="">-- Select Topic --</option>';
+            appState.syllabus.forEach(s => s.topics.forEach(t => select.innerHTML += `<option value="${t}">${s.title}: ${t}</option>`));
+        }
+        function updatePomoDisplay() {
+            const m = Math.floor(pomoState.time / 60), s = pomoState.time % 60;
+            document.getElementById('pomo-timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            const circle = document.getElementById('pomo-ring');
+            const r = circle.r.baseVal.value, c = r * 2 * Math.PI;
+            circle.style.strokeDashoffset = c - (pomoState.time / pomoState.maxTime) * c;
+        }
+        function updatePomoQuote() {
+            let arr = focusQuotes;
+            if(pomoState.mode === 'short') arr = shortBreakQuotes;
+            if(pomoState.mode === 'long') arr = longBreakQuotes;
+            document.getElementById('pomo-quote').innerText = `"${arr[Math.floor(Math.random() * arr.length)]}"`;
+            document.getElementById('pomo-mode-label').innerText = pomoState.mode + " Mode";
+        }
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -367,7 +485,6 @@
                     if (data.appState) {
                         appState = data.appState;
                         if(!appState.syllabus) appState.syllabus = JSON.parse(JSON.stringify(defaultSyllabus));
-                        if(!appState.userProfile) appState.userProfile = { xp: 0, dailyTarget: 5, mistakes: [] };
                         renderAll();
                     }
                 } else {
@@ -382,260 +499,84 @@
         }
 
         function renderAll() {
-            renderSidebar(); renderDashboard(); renderRevisions(); renderMistakes(); renderResources(); updateGamification(); updatePomoTasks();
-        }
-
-        // --- DASHBOARD ---
-        function renderDashboard() {
             const grid = document.getElementById('modules-grid'); grid.innerHTML = '';
+            let hardUnfinished = {};
             appState.subjectOrder.forEach(id => {
                 const sub = appState.syllabus.find(s => s.id === id); if(!sub) return;
                 const total = sub.topics.length; let doneCount = 0;
-
                 const rows = sub.topics.map((t, idx) => {
                     const key = `${sub.id}-${idx}`;
                     const data = appState.progress[key] || {};
                     if(data.done) doneCount++;
+                    if(data.difficulty === 'Hard' && !data.done) hardUnfinished[sub.title] = (hardUnfinished[sub.title] || 0) + 1;
+                    
+                    let badge = '';
+                    if(data.difficulty==='Easy') badge='<span class="badge-easy px-1.5 rounded text-[10px] mr-2">E</span>';
+                    if(data.difficulty==='Medium') badge='<span class="badge-medium px-1.5 rounded text-[10px] mr-2">M</span>';
+                    if(data.difficulty==='Hard') badge='<span class="badge-hard px-1.5 rounded text-[10px] mr-2">H</span>';
 
-                    let diffBadge = '';
-                    if(data.difficulty === 'Easy') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-easy font-bold mr-2">E</span>';
-                    if(data.difficulty === 'Medium') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-medium font-bold mr-2">M</span>';
-                    if(data.difficulty === 'Hard') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-hard font-bold mr-2">H</span>';
-
-                    return `
-                    <div class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl group transition-all border-b border-slate-50 dark:border-slate-800 last:border-0">
-                        <div class="flex-1 min-w-0 pr-3 flex items-center">
-                            <button onclick="deleteTopic('${sub.id}', ${idx})" class="text-red-300 hover:text-red-500 mr-3 transition" title="Delete Topic">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                            ${diffBadge}
-                            <span class="text-sm font-medium truncate ${data.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}">${t}</span>
+                    return `<div class="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <div class="flex-1 flex items-center pr-2 overflow-hidden">
+                            <button onclick="window.deleteTopic('${sub.id}', ${idx})" class="text-red-300 hover:text-red-500 mr-2"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                            ${badge}
+                            <span class="text-sm truncate ${data.done ? 'line-through text-slate-400' : 'dark:text-white'}">${t}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="openModal('${key}', '${sub.title}', '${t}')" class="text-slate-300 hover:text-primary transition"><i class="fa-solid fa-gear"></i></button>
-                            <label class="checkbox-wrapper cursor-pointer">
-                                <input type="checkbox" class="sr-only" onchange="toggleState('${key}')" ${data.done ? 'checked' : ''}>
-                                <div class="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check ${data.done ? 'block' : 'hidden'}"></i></div>
-                            </label>
+                        <div class="flex gap-2">
+                            <button onclick="window.openModal('${key}','${sub.title}','${t}')" class="text-slate-300 hover:text-primary"><i class="fa-solid fa-gear"></i></button>
+                            <label class="checkbox-wrapper cursor-pointer"><input type="checkbox" class="sr-only" onchange="window.toggleState('${key}')" ${data.done?'checked':''}><div class="w-5 h-5 border-2 border-slate-300 rounded flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-check ${data.done?'block':'hidden'}"></i></div></label>
                         </div>
                     </div>`;
                 }).join('');
-
-                const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
                 
-                grid.innerHTML += `
-                <div class="glass-panel rounded-2xl border-white/50 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden">
-                    <div class="p-5 border-b border-slate-100 dark:border-slate-700 bg-white/40 dark:bg-slate-800/40">
-                        <div class="flex justify-between items-center mb-2"><h3 class="font-bold dark:text-white">${sub.title}</h3><span class="text-xs font-bold bg-indigo-100 text-primary px-2 py-1 rounded-md">${pct}%</span></div>
-                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="bg-primary h-1.5 rounded-full transition-all" style="width: ${pct}%"></div></div>
-                    </div>
-                    <div class="flex-1 md:max-h-[350px] overflow-y-auto custom-scrollbar p-1">${rows}</div>
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/50 flex gap-2">
-                        <input id="add-${sub.id}" type="text" class="flex-1 text-sm p-2 rounded-lg border dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none" placeholder="Add topic..." onkeypress="if(event.key==='Enter') addTopic('${sub.id}')">
-                        <button onclick="addTopic('${sub.id}')" class="bg-primary text-white w-9 rounded-lg"><i class="fa-solid fa-plus"></i></button>
-                    </div>
+                const pct = total===0?0:Math.round((doneCount/total)*100);
+                grid.innerHTML += `<div class="glass-panel rounded-2xl overflow-hidden flex flex-col shadow-sm">
+                    <div class="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center"><h3 class="font-bold text-sm dark:text-white">${sub.title}</h3><span class="text-xs font-bold bg-indigo-100 text-primary px-2 py-0.5 rounded">${pct}%</span></div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-1"><div class="bg-primary h-1 transition-all" style="width:${pct}%"></div></div>
+                    <div class="flex-1 max-h-80 overflow-y-auto custom-scrollbar">${rows}</div>
+                    <div class="p-2 border-t border-slate-100 dark:border-slate-700 flex gap-2"><input id="add-${sub.id}" type="text" class="flex-1 text-xs p-2 rounded border dark:bg-slate-900 dark:border-slate-700 dark:text-white" placeholder="Add topic..." onkeypress="if(event.key==='Enter') window.addTopic('${sub.id}')"><button onclick="window.addTopic('${sub.id}')" class="bg-primary text-white w-8 rounded"><i class="fa-solid fa-plus text-xs"></i></button></div>
                 </div>`;
             });
+            updateGamification(); renderRevisions(); renderMistakes(); renderResources();
         }
 
-        // --- POMODORO LOGIC ---
-        function togglePomodoroUI() {
-            document.getElementById('pomodoro-overlay').classList.toggle('hidden');
-            updatePomoTasks();
+        function updateGamification() {
+            document.getElementById('user-xp').innerText = appState.userProfile.xp;
+            document.getElementById('xp-progress').style.width = `${Math.min(100, (appState.userProfile.xp % 500)/5)}%`;
+            document.getElementById('today-goal').innerText = appState.userProfile.dailyTarget;
         }
 
-        function updatePomoTasks() {
-            const select = document.getElementById('pomo-task-select');
-            select.innerHTML = '<option value="">-- Select a Topic --</option>';
-            appState.syllabus.forEach(s => {
-                s.topics.forEach(t => {
-                    select.innerHTML += `<option value="${t}">${s.title}: ${t}</option>`;
-                });
-            });
-        }
-
-        function setTimerMode(min, mode) {
-            pomoState.active = false;
-            clearInterval(pomoState.interval);
-            pomoState.maxTime = min * 60;
-            pomoState.time = min * 60;
-            pomoState.mode = mode;
-            updatePomoDisplay();
-            updatePomoQuote();
-            document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
-        }
-
-        function setCustomTime() {
-            const min = parseInt(document.getElementById('custom-min').value);
-            if(min > 0) setTimerMode(min, 'focus');
-        }
-
-        function togglePomoTimer() {
-            if(pomoState.active) {
-                clearInterval(pomoState.interval);
-                document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
-            } else {
-                pomoState.interval = setInterval(() => {
-                    pomoState.time--;
-                    updatePomoDisplay();
-                    if(pomoState.time <= 0) {
-                        clearInterval(pomoState.interval);
-                        pomoState.active = false;
-                        realAlarm.play();
-                        alert("Time's Up! ⏰");
-                        document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
-                    }
-                }, 1000);
-                document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
-            }
-            pomoState.active = !pomoState.active;
-        }
-
-        function resetPomoTimer() {
-            pomoState.active = false; clearInterval(pomoState.interval);
-            pomoState.time = pomoState.maxTime; updatePomoDisplay();
-            document.getElementById('pomo-action-btn').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
-        }
-
-        function updatePomoDisplay() {
-            const m = Math.floor(pomoState.time / 60);
-            const s = pomoState.time % 60;
-            document.getElementById('pomo-timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            
-            const circle = document.getElementById('pomo-ring');
-            const radius = circle.r.baseVal.value;
-            const circumference = radius * 2 * Math.PI;
-            const offset = circumference - (pomoState.time / pomoState.maxTime) * circumference;
-            circle.style.strokeDashoffset = offset;
-        }
-
-        function updatePomoQuote() {
-            let quotesArr = focusQuotes;
-            if(pomoState.mode === 'short') quotesArr = shortBreakQuotes;
-            if(pomoState.mode === 'long') quotesArr = longBreakQuotes;
-            document.getElementById('pomo-quote').innerText = `"${quotesArr[Math.floor(Math.random() * quotesArr.length)]}"`;
-            document.getElementById('pomo-mode-label').innerText = pomoState.mode + " Mode";
-        }
-
-        // --- CORE ACTIONS ---
-        function addTopic(subId) {
-            const input = document.getElementById(`add-${subId}`); if(!input.value.trim()) return;
-            const sub = appState.syllabus.find(s => s.id === subId); sub.topics.push(input.value); input.value = ""; saveToCloud();
-        }
-
-        function deleteTopic(subId, idx) {
-            if(!confirm("Are you sure you want to delete this topic?")) return;
-            const sub = appState.syllabus.find(s => s.id === subId);
-            sub.topics.splice(idx, 1);
-            // Shift progress data
-            for (let i = idx; i < sub.topics.length; i++) {
-                const oldKey = `${subId}-${i+1}`, newKey = `${subId}-${i}`;
-                if (appState.progress[oldKey]) appState.progress[newKey] = appState.progress[oldKey];
-                else delete appState.progress[newKey];
-            }
-            delete appState.progress[`${subId}-${sub.topics.length}`];
-            saveToCloud();
-        }
-
-        function toggleState(key) {
-            if (!appState.progress[key]) appState.progress[key] = { done: false };
-            const wasDone = appState.progress[key].done; appState.progress[key].done = !wasDone;
-            if (!wasDone) appState.progress[key].dateCompleted = new Date().toISOString();
-            
-            let xpGain = 10;
-            if (appState.progress[key].difficulty === "Medium") xpGain = 20;
-            if (appState.progress[key].difficulty === "Hard") xpGain = 30;
-            if (!wasDone) appState.userProfile.xp += xpGain; else appState.userProfile.xp -= xpGain;
-            
-            updateDailyTargetUI(wasDone ? -1 : 1);
-            saveToCloud();
-            if(!wasDone) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        }
-
-        // --- UTILS ---
-        function adjustTarget(n) { appState.userProfile.dailyTarget += n; if(appState.userProfile.dailyTarget < 1) appState.userProfile.dailyTarget = 1; saveToCloud(); }
-        function updateDailyTargetUI(n) { const el = document.getElementById('today-done'); let v = parseInt(el.innerText) + n; if(v<0)v=0; el.innerText = v; document.getElementById('daily-bar').style.width = `${Math.min(100, (v/appState.userProfile.dailyTarget)*100)}%`; }
-        function updateGamification() { document.getElementById('user-xp').innerText = appState.userProfile.xp; document.getElementById('xp-progress').style.width = `${Math.min(100, (appState.userProfile.xp % 500)/5)}%`; document.getElementById('today-goal').innerText = appState.userProfile.dailyTarget; }
-        
         function renderRevisions() {
             const list = document.getElementById('revision-list'); list.innerHTML = '';
-            const now = new Date(); let count = 0;
+            const now = new Date(); let c=0;
             Object.keys(appState.progress).forEach(key => {
-                const data = appState.progress[key];
-                if (data.done && data.dateCompleted) {
-                    const diff = Math.floor((now - new Date(data.dateCompleted)) / (1000 * 60 * 60 * 24));
-                    if ([1, 3, 7, 15].includes(diff)) {
-                        count++; const [sid, tid] = key.split('-'); const sub = appState.syllabus.find(s => s.id === sid);
-                        if (sub) list.innerHTML += `<div class="min-w-[150px] bg-white dark:bg-slate-800 p-3 rounded-xl border border-yellow-400 shadow-sm"><p class="text-[10px] text-yellow-600 font-bold uppercase">Day ${diff}</p><p class="font-bold text-sm truncate dark:text-white">${sub.topics[tid]}</p></div>`;
+                if(appState.progress[key].done && appState.progress[key].dateCompleted) {
+                    const d = Math.floor((now - new Date(appState.progress[key].dateCompleted))/(1000*60*60*24));
+                    if([1,3,7,15].includes(d)) {
+                        c++; const [s,i] = key.split('-'); const sub = appState.syllabus.find(x=>x.id===s);
+                        list.innerHTML += `<div class="min-w-[140px] bg-white dark:bg-slate-800 p-3 rounded-xl border border-yellow-400 shadow-sm"><p class="text-[10px] text-yellow-600 font-bold uppercase">Day ${d}</p><p class="font-bold text-xs truncate dark:text-white">${sub.topics[i]}</p></div>`;
                     }
                 }
             });
-            if(count === 0) list.innerHTML = `<div class="text-sm text-slate-400 italic">No revisions due today.</div>`;
+            if(c===0) list.innerHTML = `<div class="text-xs text-slate-400 italic">No topics due.</div>`;
         }
 
         function renderMistakes() {
             const list = document.getElementById('mistake-list'); list.innerHTML = '';
-            if(!appState.userProfile.mistakes.length) { list.innerHTML = `<p class="text-slate-400 italic">No mistakes logged.</p>`; return; }
-            appState.userProfile.mistakes.forEach(m => list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30"><h4 class="font-bold text-red-700 dark:text-red-400 text-sm">${m.topic}</h4><p class="text-slate-600 dark:text-slate-300 text-sm mt-1">${m.note}</p></div>`);
+            if(!appState.userProfile.mistakes.length) list.innerHTML = `<p class="text-slate-400 italic text-sm">No mistakes logged.</p>`;
+            appState.userProfile.mistakes.forEach(m => list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/10 p-3 rounded-lg border border-red-100 dark:border-red-900/30"><h4 class="font-bold text-red-700 dark:text-red-400 text-xs">${m.topic}</h4><p class="text-slate-600 dark:text-slate-300 text-xs mt-1">${m.note}</p></div>`);
         }
 
         function renderResources() {
             const list = document.getElementById('resource-list'); list.innerHTML = '';
             Object.keys(appState.progress).forEach(k => {
-                const p = appState.progress[k];
-                if(p.link) { const [sid, tid] = k.split('-'); const t = appState.syllabus.find(s=>s.id===sid).topics[tid]; list.innerHTML += `<div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center"><div class="overflow-hidden mr-3"><h4 class="font-bold text-sm truncate dark:text-white">${t}</h4><p class="text-xs text-slate-400 truncate">${p.link}</p></div><a href="${p.link}" target="_blank" class="w-8 h-8 rounded-lg bg-indigo-50 text-primary flex items-center justify-center"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`; }
+                if(appState.progress[k].link) {
+                    const [s,i] = k.split('-'); const sub = appState.syllabus.find(x=>x.id===s);
+                    list.innerHTML += `<div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 flex justify-between items-center"><div class="overflow-hidden mr-2"><h4 class="font-bold text-xs truncate dark:text-white">${sub.topics[i]}</h4></div><a href="${appState.progress[k].link}" target="_blank" class="text-primary text-xs hover:underline">Open</a></div>`;
+                }
             });
         }
 
-        function openModal(key, sub, topic) {
-            currentModalKey = key; const p = appState.progress[key] || {};
-            document.getElementById('detail-modal').classList.remove('hidden');
-            document.getElementById('modal-topic-title').innerText = topic;
-            document.getElementById('modal-difficulty').value = p.difficulty || "Easy";
-            document.getElementById('modal-time').value = p.time || "";
-            document.getElementById('modal-notes').value = p.note || "";
-            document.getElementById('modal-link').value = p.link || "";
-            document.getElementById('modal-mistake-check').checked = false;
-            document.getElementById('modal-mistake-text').classList.add('hidden');
-            document.getElementById('modal-mistake-check').onchange = (e) => document.getElementById('modal-mistake-text').classList.toggle('hidden', !e.target.checked);
-        }
-        function saveModalDetails() {
-            if(!currentModalKey) return; if(!appState.progress[currentModalKey]) appState.progress[currentModalKey] = {};
-            const p = appState.progress[currentModalKey];
-            p.difficulty = document.getElementById('modal-difficulty').value;
-            p.time = document.getElementById('modal-time').value;
-            p.note = document.getElementById('modal-notes').value;
-            p.link = document.getElementById('modal-link').value;
-            if(document.getElementById('modal-mistake-check').checked) {
-                const txt = document.getElementById('modal-mistake-text').value;
-                if(txt) appState.userProfile.mistakes.push({ topic: document.getElementById('modal-topic-title').innerText, note: txt });
-            }
-            saveToCloud(); document.getElementById('detail-modal').classList.add('hidden');
-        }
-        function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); }
-        function switchView(v) {
-            ['dashboard','mistakes','resources'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
-            document.getElementById(`view-${v}`).classList.remove('hidden');
-            if(v==='resources') renderResources(); if(v==='mistakes') renderMistakes();
-            if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
-        }
-        function openSettings() {
-            const list = document.getElementById('priority-list'); list.innerHTML = '';
-            appState.subjectOrder.forEach(id => {
-                const s = appState.syllabus.find(x => x.id === id);
-                if(s) list.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-600 rounded-lg flex justify-between items-center cursor-move" data-id="${id}"><span class="font-bold text-sm dark:text-white">${s.title}</span><i class="fa-solid fa-bars text-slate-400"></i></div>`;
-            });
-            document.getElementById('settings-modal').classList.remove('hidden');
-            new Sortable(list, { onEnd: () => { appState.subjectOrder = Array.from(list.children).map(c => c.dataset.id); saveToCloud(); } });
-        }
-        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
-
-        // Quotes
-        const focusQuotes = ["Code is poetry.", "Stay curious.", "First solve the problem, then write the code.", "Focus on being productive instead of busy.", "Don't stop until you're proud."];
-        const shortBreakQuotes = ["Breathe in, breathe out.", "Drink some water.", "Stretch your back.", "Rest your eyes.", "Relax your shoulders."];
-        const longBreakQuotes = ["Go for a walk.", "Real rest feels like recovery.", "Disconnect to reconnect.", "You deserve this break.", "Refresh your mind completely."];
-        const realAlarm = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
     </script>
 </body>
 </html>
