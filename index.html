@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PG-DAC Cloud Ultimate (Complete)</title>
+    <title>PG-DAC Titan Tracker</title>
     
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,7 +18,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -25,9 +28,12 @@
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
                     colors: {
                         primary: '#6366f1',
-                        primaryDark: '#4338ca',
+                        secondary: '#8b5cf6',
                         darkBg: '#0f172a',
                         darkCard: '#1e293b',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b'
                     }
                 }
             }
@@ -44,240 +50,276 @@
             .dark ::-webkit-scrollbar-thumb { background: #475569; }
         }
 
-        .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Tooltips */
-        .tooltip-container { position: relative; }
-        .tooltip-text {
-            visibility: hidden; width: max-content; background-color: #334155; color: #fff;
-            text-align: center; border-radius: 6px; padding: 5px 10px; position: absolute;
-            z-index: 50; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0;
-            transition: opacity 0.3s; font-size: 0.75rem; font-weight: 500; pointer-events: none;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
-        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .animate-fade-up { animation: fadeUp 0.5s ease-out forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Level Progress Bar Animation */
+        @keyframes fillBar { from { width: 0%; } }
+        .xp-bar { animation: fillBar 1.5s ease-out forwards; }
 
         .checkbox-wrapper input:checked + div { 
             background: linear-gradient(135deg, #6366f1, #8b5cf6); border-color: transparent; transform: scale(1.05);
         }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-        .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.75); border: 1px solid rgba(255, 255, 255, 0.05);
-        }
 
-        .sortable-ghost { opacity: 0.4; background: #e0e7ff; }
-        
-        .group:hover .delete-btn { opacity: 1; pointer-events: auto; }
-        .delete-btn { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-        
-        /* Overlays */
-        #auth-overlay, #session-lock { transition: opacity 0.3s ease; }
-        
-        html { font-size: 16px; scroll-behavior: smooth; } 
+        /* Tooltip */
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; bottom: 130%; }
+        .tooltip-text { transition: all 0.2s; opacity: 0; visibility: hidden; }
+
+        /* Difficulty Badges */
+        .badge-easy { @apply bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800; }
+        .badge-medium { @apply bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800; }
+        .badge-hard { @apply bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-darkBg dark:via-darkBg dark:to-slate-900 text-slate-700 dark:text-slate-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden transition-colors duration-300">
 
-    <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center">
-        <div class="glass-panel p-10 rounded-3xl shadow-2xl max-w-md w-full text-center animate-fade-up">
-            <div class="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center text-white text-4xl mx-auto mb-6 shadow-lg shadow-indigo-500/40">
-                <i class="fa-solid fa-graduation-cap"></i>
+    <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center">
+        <div class="glass-panel p-10 rounded-3xl shadow-2xl max-w-md w-full text-center">
+            <div class="w-20 h-20 bg-gradient-to-tr from-primary to-secondary rounded-3xl flex items-center justify-center text-white text-4xl mx-auto mb-6 shadow-xl">
+                <i class="fa-solid fa-rocket"></i>
             </div>
-            <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">PG-DAC Cloud</h1>
-            <p class="text-slate-500 dark:text-slate-300 mb-8 text-sm">Sync your progress across all devices securely.</p>
-            
-            <button onclick="signIn()" class="w-full py-4 rounded-xl bg-white border border-gray-200 dark:bg-slate-700 dark:border-slate-600 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-600 transition flex items-center justify-center gap-3 font-bold text-slate-700 shadow-md group">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6 group-hover:scale-110 transition-transform" alt="Google">
-                Sign in with Google
-            </button>
-            <p id="login-error" class="text-red-500 text-xs mt-4 hidden bg-red-50 p-2 rounded"></p>
-        </div>
-    </div>
-
-    <div id="session-lock" class="fixed inset-0 z-[110] bg-red-900/95 backdrop-blur-xl flex items-center justify-center hidden text-center p-8">
-        <div class="max-w-lg animate-fade-up">
-            <div class="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-lock text-5xl text-white"></i>
-            </div>
-            <h2 class="text-3xl font-bold text-white mb-3">Session Paused</h2>
-            <p class="text-red-100 text-lg mb-8 leading-relaxed">
-                You logged in on another device. To prevent data conflicts, this window has been paused.
-            </p>
-            <button onclick="location.reload()" class="px-8 py-3 bg-white text-red-900 font-bold rounded-xl hover:bg-red-50 transition shadow-xl transform hover:scale-105">
-                Resume Here
+            <h1 class="text-4xl font-extrabold text-slate-800 dark:text-white mb-2">Titan Tracker</h1>
+            <p class="text-slate-500 dark:text-slate-300 mb-8">The Ultimate PG-DAC Companion</p>
+            <button onclick="signIn()" class="w-full py-4 rounded-2xl bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:scale-[1.02] transition-transform flex items-center justify-center gap-3 font-bold text-slate-700 dark:text-white shadow-lg">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Sign in with Google
             </button>
         </div>
     </div>
 
-    <aside class="w-full md:w-72 bg-white/80 dark:bg-darkCard/90 backdrop-blur-xl border-r border-white/50 dark:border-slate-700 md:h-screen sticky top-0 z-40 flex flex-col shadow-2xl transition-all hidden md:flex" id="sidebar">
-        <div class="p-6 border-b border-gray-100 dark:border-slate-700 bg-white/40 dark:bg-slate-800/40">
-            <div class="flex items-center gap-4 mb-4">
-                <img id="user-photo" src="" class="w-12 h-12 rounded-full border-2 border-indigo-500 shadow-md hidden object-cover">
-                <div class="overflow-hidden">
+    <aside class="w-full md:w-72 bg-white/90 dark:bg-darkCard/95 border-r border-slate-200 dark:border-slate-700 md:h-screen sticky top-0 z-40 flex flex-col shadow-2xl hidden md:flex" id="sidebar">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-700">
+            <div class="flex items-center gap-4">
+                <img id="user-photo" src="" class="w-12 h-12 rounded-full border-2 border-primary p-0.5 hidden">
+                <div>
                     <h3 id="user-name" class="font-bold text-sm truncate dark:text-white">Guest</h3>
-                    <p id="sync-status" class="text-[10px] text-green-600 font-medium uppercase tracking-wider flex items-center gap-1">
-                        <i class="fa-solid fa-circle text-[6px] animate-pulse"></i> Connected
-                    </p>
-                </div>
-            </div>
-            <button onclick="signOut()" class="w-full py-2 text-xs font-bold border border-red-200 text-red-500 rounded-lg hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20 transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-            </button>
-        </div>
-
-        <div class="px-6 mt-6 mb-2">
-            <div class="bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-slate-800 p-4 rounded-2xl text-center border border-indigo-100 dark:border-slate-700 shadow-sm">
-                <div class="flex justify-center items-center gap-2 mb-1">
-                    <span id="user-badge-icon" class="text-2xl">🌱</span>
-                    <h3 id="user-rank" class="font-bold text-slate-800 dark:text-white">Novice</h3>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
-                    <div id="sidebar-progress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold dark:bg-green-900/30 dark:text-green-400">ONLINE</span>
+                        <span id="streak-badge" class="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold dark:bg-orange-900/30 dark:text-orange-400">🔥 0 Day</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-4">
-            <button onclick="switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3.5 text-base font-medium rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 transition-transform active:scale-95">
-                <i class="fa-solid fa-chart-pie"></i> Dashboard
-            </button>
-            <button onclick="switchView('resources')" class="w-full flex items-center gap-4 px-5 py-3.5 text-base font-medium rounded-xl text-gray-600 hover:bg-white hover:text-indigo-600 hover:shadow-md dark:text-gray-300 dark:hover:bg-slate-700 transition-all">
-                <i class="fa-solid fa-bookmark"></i> Resource Hub
-            </button>
-            <div class="pt-6 pb-2">
-                <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Modules</p>
-                <div id="nav-modules" class="space-y-1"></div>
+        <div class="px-4 mt-6">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-primary/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Current Rank</p>
+                        <h3 id="user-rank" class="text-xl font-bold text-yellow-400">Novice</h3>
+                    </div>
+                    <div class="text-right">
+                        <span id="user-xp" class="text-2xl font-bold">0</span> <span class="text-xs text-slate-400">XP</span>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-700 rounded-full h-2">
+                    <div id="xp-progress" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full xp-bar" style="width: 0%"></div>
+                </div>
             </div>
+        </div>
+
+        <nav class="px-4 flex-1 overflow-y-auto space-y-2 mt-6">
+            <button onclick="switchView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/30 font-semibold transition hover:scale-[1.02]">
+                <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+            </button>
+            <button onclick="switchView('mocks')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium">
+                <i class="fa-solid fa-file-pen w-5"></i> Mock Tests
+            </button>
+            <button onclick="switchView('mistakes')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium">
+                <i class="fa-solid fa-triangle-exclamation w-5"></i> Mistake Book
+            </button>
+            <button onclick="switchView('resources')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition font-medium">
+                <i class="fa-solid fa-bookmark w-5"></i> Resources
+            </button>
         </nav>
 
-        <div class="p-6 border-t border-gray-100 dark:border-slate-700 bg-white/50 dark:bg-darkCard/50">
-            <div class="grid grid-cols-4 gap-2">
-                <button onclick="openSettings()" class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-sliders text-lg"></i><span class="tooltip-text">Settings</span></button>
-                <button onclick="toggleDarkMode()" class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-moon text-lg"></i><span class="tooltip-text">Theme</span></button>
-                <button onclick="exportData()" class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition"><i class="fa-solid fa-download text-lg"></i><span class="tooltip-text">Backup</span></button>
-                <label class="tooltip-container h-10 w-full rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-500 hover:text-indigo-600 transition cursor-pointer"><i class="fa-solid fa-upload text-lg"></i><input type="file" class="hidden" onchange="importData(this)"><span class="tooltip-text">Restore</span></label>
-            </div>
+        <div class="p-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-2 gap-2">
+            <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><i class="fa-solid fa-moon"></i></button>
+            <button onclick="signOut()" class="p-2 rounded-lg hover:bg-red-50 text-red-500 dark:hover:bg-red-900/20"><i class="fa-solid fa-power-off"></i></button>
         </div>
     </aside>
 
-    <div class="md:hidden glass-panel p-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
-        <span class="font-bold text-xl text-primary flex items-center gap-2">
-            <i class="fa-solid fa-cloud"></i> PG-DAC Cloud
-        </span>
-        <button onclick="document.getElementById('sidebar').classList.toggle('hidden'); document.getElementById('sidebar').classList.toggle('absolute'); document.getElementById('sidebar').classList.toggle('h-screen'); document.getElementById('sidebar').classList.toggle('shadow-2xl'); document.getElementById('sidebar').classList.toggle('w-72');" class="text-slate-600 dark:text-slate-200 p-2">
-            <i class="fa-solid fa-bars text-2xl"></i>
-        </button>
+    <div class="md:hidden fixed top-0 w-full glass-panel z-50 p-4 flex justify-between items-center shadow-sm">
+        <span class="font-bold text-lg text-primary flex items-center gap-2"><i class="fa-solid fa-rocket"></i> Titan</span>
+        <button onclick="document.getElementById('sidebar').classList.toggle('hidden'); document.getElementById('sidebar').classList.toggle('absolute'); document.getElementById('sidebar').classList.toggle('h-screen'); document.getElementById('sidebar').classList.toggle('w-72');" class="text-slate-600 dark:text-white"><i class="fa-solid fa-bars text-xl"></i></button>
     </div>
 
-    <main class="flex-1 overflow-y-auto h-screen relative scroll-smooth p-4 md:p-8 lg:p-10" id="main-scroll">
+    <main class="flex-1 overflow-y-auto h-screen relative scroll-smooth p-4 md:p-8 pt-20 md:pt-8" id="main-scroll">
         
-        <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 mb-10 animate-fade-up">
-            <div class="max-w-2xl">
-                <h1 class="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white mb-2 leading-tight">
-                    Welcome back, <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">Scholar!</span>
-                </h1>
-                <p id="daily-quote" class="text-base text-slate-500 dark:text-slate-400 font-medium">Loading...</p>
-            </div>
+        <div id="view-dashboard" class="space-y-8 animate-fade-up">
             
-            <div class="flex items-center gap-4 w-full xl:w-auto">
-                <div id="exam-card" class="hidden flex-1 xl:flex-none glass-panel px-5 py-3 rounded-2xl border-l-4 border-red-500 flex items-center gap-4 shadow-sm hover:shadow-md transition">
-                    <div class="bg-red-50 dark:bg-red-900/20 text-red-500 w-12 h-12 rounded-full flex items-center justify-center text-xl"><i class="fa-regular fa-clock"></i></div>
-                    <div><p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Exam Countdown</p><p id="countdown-timer" class="font-bold text-slate-800 dark:text-white text-xl">00 Days</p></div>
-                </div>
-                <div class="flex-1 xl:flex-none glass-panel px-5 py-3 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md transition">
-                    <div class="text-center"><span id="timer-display" class="font-mono text-2xl font-bold text-slate-700 dark:text-slate-200">25:00</span></div>
-                    <div class="flex gap-2">
-                        <button onclick="toggleTimer()" id="timer-btn" class="tooltip-container w-10 h-10 rounded-full bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/30 flex items-center justify-center transition active:scale-95"><i class="fa-solid fa-play ml-0.5"></i></button>
-                        <button onclick="resetTimer()" class="tooltip-container w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-red-500 hover:bg-red-50 transition flex items-center justify-center"><i class="fa-solid fa-rotate-left"></i></button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div id="view-dashboard" class="space-y-8 animate-fade-up" style="animation-delay: 0.1s;">
-            
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-xl shadow-indigo-500/20 p-8 group">
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 rounded-3xl relative overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
                     <div class="relative z-10">
-                        <div class="flex items-center gap-3 mb-4"><span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10"><i class="fa-solid fa-wand-magic-sparkles text-yellow-300 mr-2"></i>AI Recommendation</span></div>
-                        <div class="mb-6"><h2 class="text-sm text-indigo-100 opacity-80 uppercase tracking-wide mb-1" id="suggested-subject">Subject</h2><h3 class="text-3xl font-bold leading-tight" id="suggested-topic">Loading...</h3></div>
-                        <button onclick="scrollToTopic()" class="bg-white text-indigo-700 px-8 py-3 rounded-xl font-bold text-base shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all transform hover:-translate-y-1 active:translate-y-0">Start Studying This Topic <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg">Daily Target</h3>
+                                <p class="text-indigo-100 text-xs">Stay consistent!</p>
+                            </div>
+                            <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                <i class="fa-solid fa-crosshairs"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-end gap-2 mb-2">
+                            <span id="today-done" class="text-4xl font-bold">0</span>
+                            <span class="text-lg text-indigo-200 mb-1">/ <span id="today-goal">5</span> topics</span>
+                        </div>
+                        <div class="w-full bg-black/20 rounded-full h-2 mb-4">
+                            <div id="daily-bar" class="bg-white h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="adjustTarget(-1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm">-</button>
+                            <button onclick="adjustTarget(1)" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm">+</button>
+                        </div>
                     </div>
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
                 </div>
 
-                <div class="glass-panel p-8 rounded-3xl flex flex-col justify-center items-center text-center hover:shadow-lg transition-all duration-300 border-t-4 border-yellow-400">
-                    <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-2xl shadow-inner"><i class="fa-solid fa-bolt"></i></div>
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-white">Flash Review</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 mt-2 px-4">Instantly revise 3 topics you've completed but haven't reviewed.</p>
-                    <button onclick="startFlashReview()" class="w-full py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-bold text-base shadow-lg shadow-yellow-400/30 transition-transform hover:-translate-y-1">Start Quick Session</button>
+                <div class="xl:col-span-2 glass-panel p-6 rounded-3xl border-l-4 border-yellow-400">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-rotate-right text-yellow-500"></i> Due for Revision
+                        </h3>
+                        <span class="text-xs text-slate-400">Based on Spaced Repetition (1-3-7-15 days)</span>
+                    </div>
+                    <div id="revision-list" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        <div class="text-sm text-slate-400 italic">No topics due for revision today! Great job.</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h2 class="text-2xl font-bold text-slate-700 dark:text-white">Course Modules</h2>
-                    <div class="relative w-full md:w-96 group">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="fa-solid fa-search text-gray-400 group-focus-within:text-indigo-500 transition"></i></div>
-                        <input type="text" id="search-input" oninput="handleSearch()" placeholder="Search any topic..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-white dark:bg-darkCard border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-primary outline-none transition shadow-sm text-base">
-                    </div>
+            <div id="ai-insight-box" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 p-4 rounded-2xl flex items-center gap-4 animate-fade-up">
+                <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <div id="modules-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="font-bold text-red-700 dark:text-red-400 text-sm">Weakness Detected</h4>
+                    <p id="ai-msg" class="text-xs text-red-600 dark:text-red-300">You have many uncompleted 'Hard' topics in <span class="font-bold">OS</span>.</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Syllabus Tracker</h2>
+                    <button onclick="openSettings()" class="text-sm text-primary hover:underline">Reorder Subjects</button>
+                </div>
+                <div id="modules-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    </div>
+            </div>
+        </div>
+
+        <div id="view-mocks" class="hidden space-y-6 animate-fade-up">
+            <div class="glass-panel p-8 rounded-3xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold dark:text-white">Mock Test Tracker</h2>
+                    <button onclick="addMockTest()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-indigo-600">+ Log Test</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                        <thead class="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-bold text-slate-400">
+                            <tr>
+                                <th class="p-4 rounded-l-xl">Date</th>
+                                <th class="p-4">Subject</th>
+                                <th class="p-4">Score</th>
+                                <th class="p-4 rounded-r-xl">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mock-table-body">
+                            </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div id="view-resources" class="hidden animate-fade-up">
-            <div class="glass-panel rounded-3xl p-8 md:p-12 min-h-[60vh]">
-                <div class="flex items-center gap-4 mb-8 border-b border-gray-100 dark:border-slate-700 pb-6">
-                    <div class="w-14 h-14 bg-indigo-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-indigo-600 text-2xl"><i class="fa-solid fa-bookmark"></i></div>
-                    <div><h2 class="text-3xl font-bold text-slate-800 dark:text-white">Resource Hub</h2><p class="text-slate-500 dark:text-slate-400">All your saved links in one place.</p></div>
-                </div>
-                <div id="resource-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        <div id="view-mistakes" class="hidden space-y-6 animate-fade-up">
+            <div class="glass-panel p-8 rounded-3xl border-l-4 border-red-500">
+                <h2 class="text-2xl font-bold dark:text-white mb-2">Mistake Notebook</h2>
+                <p class="text-sm text-slate-500 mb-6">"Success is stumbling from failure to failure with no loss of enthusiasm."</p>
+                <div id="mistake-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
             </div>
         </div>
+
+        <div id="view-resources" class="hidden space-y-6 animate-fade-up">
+            <div class="glass-panel p-8 rounded-3xl">
+                <h2 class="text-2xl font-bold dark:text-white mb-6">Resource Hub</h2>
+                <div id="resource-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
     </main>
 
-    <div id="settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl shadow-2xl p-8 transform transition-all scale-100 animate-fade-up">
-            <h3 class="text-2xl font-bold mb-6 dark:text-white">Settings</h3>
-            <div class="mb-8"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wide">CCEE Exam Date</label><input type="date" id="exam-date-input" onchange="saveSettings()" class="w-full p-3 rounded-xl border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary outline-none"></div>
-            <div class="mb-8"><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-3 uppercase tracking-wide">Priority Order (Drag to Reorder)</label><div id="priority-list" class="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div></div>
-            <div class="flex justify-end"><button onclick="document.getElementById('settings-modal').classList.add('hidden'); renderDashboard(); recommendNextTopic();" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition">Save & Close</button></div>
-        </div>
-    </div>
-
-    <div id="detail-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-3xl shadow-2xl p-8 animate-fade-up">
-            <div class="flex justify-between items-start mb-6 border-b border-gray-100 dark:border-slate-700 pb-4">
-                <div><span class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1 block" id="modal-subject">Subject</span><h3 id="modal-topic-title" class="font-bold text-xl dark:text-white leading-tight">Topic Title</h3></div>
-                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+    <div id="detail-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl shadow-2xl p-6 transform scale-100 transition-all">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Edit Topic</span>
+                    <h3 id="modal-topic-title" class="text-xl font-bold dark:text-white">Topic Name</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
+
             <div class="space-y-4">
-                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">Your Notes</label><textarea id="modal-notes" rows="5" class="w-full p-4 rounded-xl border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-base focus:ring-2 focus:ring-primary outline-none resize-none" placeholder="Write down key concepts..."></textarea></div>
-                <div><label class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">Resource Link</label><input type="text" id="modal-link" class="w-full p-3 rounded-xl border border-gray-200 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-base focus:ring-2 focus:ring-primary outline-none" placeholder="https://..."></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Difficulty</label>
+                        <select id="modal-difficulty" class="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm dark:text-white outline-none">
+                            <option value="Easy">🟢 Easy</option>
+                            <option value="Medium">🟡 Medium</option>
+                            <option value="Hard">🔴 Hard</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Est. Time (Hrs)</label>
+                        <input type="number" id="modal-time" class="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm dark:text-white outline-none" placeholder="1.5">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Notes</label>
+                    <textarea id="modal-notes" rows="3" class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm dark:text-white outline-none resize-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Resource Link</label>
+                    <input type="text" id="modal-link" class="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm dark:text-white outline-none">
+                </div>
+
+                <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/50">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="modal-mistake-check" class="rounded text-red-500 focus:ring-0">
+                        <span class="text-xs font-bold text-red-600 dark:text-red-400">Add to Mistake Notebook?</span>
+                    </label>
+                    <input type="text" id="modal-mistake-text" class="w-full mt-2 p-2 text-xs bg-white dark:bg-slate-800 rounded border border-red-200 hidden" placeholder="Describe the error...">
+                </div>
             </div>
-            <button onclick="saveModalDetails()" class="w-full mt-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition transform active:scale-95">Save Details</button>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="saveModalDetails()" class="px-6 py-2 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-indigo-600">Save Changes</button>
+            </div>
         </div>
     </div>
 
-    <div id="flash-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl shadow-2xl p-10 text-center animate-fade-up border-t-8 border-yellow-400">
-            <div class="mb-6 text-yellow-500 text-5xl drop-shadow-sm"><i class="fa-solid fa-bolt"></i></div>
-            <h3 class="text-3xl font-bold mb-3 dark:text-white">Quick Review</h3>
-            <p class="text-slate-500 dark:text-slate-400 mb-8 text-lg">Recall these concepts before you continue:</p>
-            <div id="flash-list" class="space-y-4 text-left mb-8"></div>
-            <button onclick="document.getElementById('flash-modal').classList.add('hidden')" class="px-8 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white rounded-xl font-bold transition">Done</button>
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-3xl p-6">
+            <h3 class="font-bold text-lg dark:text-white mb-4">Settings</h3>
+            <div id="priority-list" class="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar"></div>
+            <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="mt-4 w-full py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-bold">Close</button>
         </div>
     </div>
 
     <script>
         // --- 1. FIREBASE CONFIG ---
         const firebaseConfig = {
+            // 🔴 Paste your actual config here
             apiKey: "AIzaSyDrgpLSWCTW1Qgh4ZG6qOoBUbFRgcY0gyM",
             authDomain: "pg-dac-tracker.firebaseapp.com",
             projectId: "pg-dac-tracker",
@@ -291,39 +333,36 @@
         const db = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // --- 2. DATA DEFAULTS (COMPLETE SYLLABUS) ---
+        // Enable Offline Persistence
+        db.enablePersistence().catch(err => console.log("Persistence error:", err.code));
+
+        // --- 2. DATA MODEL (ENHANCED) ---
         const defaultSyllabus = [
-             { id: "algo", title: "Algorithms (Java)", topics: ["Problem Solving", "Complexity (Big O)", "Arrays, Stacks, Queues", "Linked Lists", "Recursion", "Trees (BST, AVL)", "Searching & Sorting", "Hashing", "Graphs (BFS, DFS)", "Algo Design"] },
+             { id: "algo", title: "Algorithms (Java)", topics: ["Complexity (Big O)", "Arrays, Stacks, Queues", "Linked Lists", "Recursion", "Trees (BST, AVL)", "Searching & Sorting", "Graphs (BFS, DFS)", "Greedy & DP"] },
              { id: "os", title: "OS & Methodologies", topics: ["OS Concepts", "Linux & Shell", "Process Mgmt", "Memory Mgmt", "Deadlocks", "Git & Version Control", "SDLC & Agile", "DevOps & Docker", "Testing (Selenium)"] },
-             { id: "cpp", title: "C++ Programming", topics: ["Pointers", "Memory Mgmt", "OOP in C++", "Polymorphism", "Templates & STL", "Exception Handling"] },
+             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections Framework", "Interfaces & Abstract", "Multithreading", "Exception Handling", "File IO", "Serialization"] },
+             { id: "web", title: "Web Technologies", topics: ["HTML5 & CSS3", "JavaScript ES6+", "DOM Manipulation", "React Components", "React Hooks", "Node.js & Express", "REST APIs", "Redux"] },
              { id: "dbms", title: "Database Tech", topics: ["Normalization", "SQL Queries", "Joins", "Procedures & Triggers", "MongoDB CRUD", "NoSQL Concepts"] },
              { id: "dotnet", title: "MS.Net Tech", topics: [".Net Framework", "C# Basics", "OOP in C#", "LINQ", "Async/Await", "ASP.Net MVC", "Entity Framework"] },
-             { id: "java_oop", title: "Core Java", topics: ["JVM & Basics", "OOP Principles", "Collections Framework", "Interfaces & Abstract", "Multithreading", "Exception Handling", "File IO", "Serialization"] },
+             { id: "cpp", title: "C++ Programming", topics: ["Pointers", "Memory Mgmt", "OOP in C++", "Polymorphism", "Templates & STL", "Exception Handling"] },
              { id: "aptitude", title: "Aptitude", topics: ["Quant", "Logical Reasoning", "Data Interpretation", "Communication Skills", "Interview Prep"] },
-             { id: "web", title: "Web Tech", topics: ["HTML5 & CSS3", "JavaScript ES6+", "DOM Manipulation", "React Components", "React Hooks", "Node.js & Express", "REST APIs", "Redux"] },
              { id: "java_web", title: "Web-based Java", topics: ["JDBC", "Servlets", "JSP & JSTL", "Hibernate", "Spring Core", "Spring MVC", "Spring Boot", "Spring Data JPA", "Microservices"] }
         ];
 
         let appState = {
-            progress: {},
+            progress: {}, // { "algo-0": { done: true, rev: false, difficulty: "Medium", time: 1.5, lastRev: "ISO..." } }
             syllabus: JSON.parse(JSON.stringify(defaultSyllabus)),
             subjectOrder: defaultSyllabus.map(s => s.id),
-            examDate: ""
+            userProfile: { xp: 0, level: 1, streak: 0, lastLoginDate: "", dailyTarget: 5, mockTests: [], mistakes: [] }
         };
 
-        const quotes = ["Code is poetry.", "Simplicity is key.", "Keep learning.", "Stay curious.", "Debug with patience.", "First solve the problem, then write the code."];
         let currentUid = null;
         let currentSessionId = Date.now().toString();
         let currentModalKey = null;
 
-        // --- 3. AUTH LOGIC ---
-        function signIn() {
-            auth.signInWithPopup(provider).catch(error => {
-                document.getElementById('login-error').innerText = error.message;
-                document.getElementById('login-error').classList.remove('hidden');
-            });
-        }
-        function signOut() { auth.signOut().then(()=>location.reload()); }
+        // --- 3. AUTH & INIT ---
+        function signIn() { auth.signInWithPopup(provider); }
+        function signOut() { auth.signOut().then(() => location.reload()); }
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -331,269 +370,338 @@
                 document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('user-photo').src = user.photoURL;
                 document.getElementById('user-photo').classList.remove('hidden');
-                document.getElementById('user-name').innerText = user.displayName;
+                document.getElementById('user-name').innerText = user.displayName.split(' ')[0];
                 initUserData(user);
-                startSessionWatch(user.uid);
-            } else {
-                document.getElementById('auth-overlay').classList.remove('hidden');
+                // Session Watch
+                db.collection('users').doc(user.uid).set({ activeSessionId: currentSessionId }, { merge: true });
             }
         });
 
         async function initUserData(user) {
-            db.collection('users').doc(user.uid).onSnapshot((doc) => {
-                if(doc.exists) {
+            db.collection('users').doc(user.uid).onSnapshot(doc => {
+                if (doc.exists) {
                     const data = doc.data();
-                    if(data.activeSessionId && data.activeSessionId !== currentSessionId) {
-                        document.getElementById('session-lock').classList.remove('hidden');
-                        return;
+                    // Session Lock
+                    if (data.activeSessionId && data.activeSessionId !== currentSessionId) {
+                        document.getElementById('session-lock').classList.remove('hidden'); return;
                     }
-                    if(data.appState) {
+                    if (data.appState) {
                         appState = data.appState;
-                        // Validation: If sync happens but missing data structure
-                        if(!appState.syllabus || appState.syllabus.length < 9) {
-                            appState.syllabus = JSON.parse(JSON.stringify(defaultSyllabus));
-                        }
-                        if(!appState.subjectOrder || appState.subjectOrder.length < 9) {
-                            appState.subjectOrder = defaultSyllabus.map(s=>s.id);
-                        }
-                        renderSidebar();
-                        renderDashboard();
-                        initCountdown();
-                        recommendNextTopic();
-                        updateGamification();
-                        document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-circle text-[8px] text-green-500 animate-pulse"></i> Connected';
+                        // Basic Migration checks
+                        if(!appState.userProfile) appState.userProfile = { xp: 0, dailyTarget: 5, mockTests: [], mistakes: [] };
+                        if(!appState.userProfile.mistakes) appState.userProfile.mistakes = [];
+                        
+                        renderAll();
                     }
                 } else {
-                    // New user: Check if local storage exists and migrate
-                    const localData = localStorage.getItem('pgdac_tracker_v6');
-                    if (localData) {
-                        try {
-                            appState = JSON.parse(localData);
-                            console.log("Migrating local data to cloud...");
-                        } catch(e) {
-                            console.log("Local data corrupted, using default");
-                        }
-                    }
-                    saveToCloud(); 
+                    saveToCloud(); // New User
                 }
             });
         }
 
-        function startSessionWatch(uid) {
-            db.collection('users').doc(uid).set({ activeSessionId: currentSessionId, lastLogin: new Date().toISOString() }, { merge: true });
-        }
-
         function saveToCloud() {
-            if(!currentUid) return;
-            document.getElementById('sync-status').innerHTML = '<i class="fa-solid fa-rotate fa-spin text-xs"></i> Saving...';
-            db.collection('users').doc(currentUid).set({ appState: appState, activeSessionId: currentSessionId }, { merge: true });
+            if (!currentUid) return;
+            // Calc Streak
+            const today = new Date().toISOString().split('T')[0];
+            if (appState.userProfile.lastLoginDate !== today) {
+                // Check if consecutive
+                const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                const yStr = yesterday.toISOString().split('T')[0];
+                if (appState.userProfile.lastLoginDate === yStr) appState.userProfile.streak++;
+                else appState.userProfile.streak = 1;
+                appState.userProfile.lastLoginDate = today;
+            }
+            db.collection('users').doc(currentUid).set({ appState, activeSessionId: currentSessionId }, { merge: true });
         }
 
-        // --- 4. UI RENDERING ---
-        window.addEventListener('DOMContentLoaded', () => {
-            applyTheme();
-            document.getElementById('daily-quote').innerText = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
-            setupDragAndDrop();
-        });
-
-        function renderSidebar() {
-            const nav = document.getElementById('nav-modules'); nav.innerHTML = '';
-            appState.subjectOrder.forEach(id => {
-                const sub = appState.syllabus.find(s => s.id === id); if(!sub) return;
-                const btn = document.createElement('button');
-                btn.className = "w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors text-left group";
-                btn.innerHTML = `<i class="fa-regular fa-folder group-hover:text-indigo-500 transition"></i> ${sub.title.split(' ')[0]}...`;
-                btn.onclick = () => { switchView('dashboard'); setTimeout(() => document.getElementById(`module-${sub.id}`).scrollIntoView({behavior: 'smooth', block: 'center'}), 100); };
-                nav.appendChild(btn);
-            });
+        function renderAll() {
+            renderSidebar();
+            renderDashboard();
+            renderRevisions();
+            renderMocks();
+            renderMistakes();
+            renderResources();
+            updateGamification();
         }
 
+        // --- 4. DASHBOARD LOGIC ---
         function renderDashboard() {
             const grid = document.getElementById('modules-grid'); grid.innerHTML = '';
+            let todayDoneCount = 0; // Simple counter for session
+            
+            // AI Weakness Logic
+            let hardUnfinished = {};
+
             appState.subjectOrder.forEach(id => {
-                const subject = appState.syllabus.find(s => s.id === id); if(!subject) return;
-                const total = subject.topics.length; let doneCount = 0;
-                
-                const rows = subject.topics.map((topic, idx) => {
-                    const key = `${subject.id}-${idx}`;
+                const sub = appState.syllabus.find(s => s.id === id); if(!sub) return;
+                const total = sub.topics.length; let doneCount = 0;
+
+                const rows = sub.topics.map((t, idx) => {
+                    const key = `${sub.id}-${idx}`;
                     const data = appState.progress[key] || {};
                     if(data.done) doneCount++;
+                    if(data.difficulty === 'Hard' && !data.done) hardUnfinished[sub.title] = (hardUnfinished[sub.title] || 0) + 1;
+
+                    // Difficulty Badge
+                    let diffBadge = '';
+                    if(data.difficulty === 'Easy') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-easy">E</span>';
+                    if(data.difficulty === 'Medium') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-medium">M</span>';
+                    if(data.difficulty === 'Hard') diffBadge = '<span class="text-[10px] px-1.5 py-0.5 rounded badge-hard">H</span>';
+
                     return `
-                    <div class="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-slate-700/30 transition-colors border-b border-gray-100 dark:border-slate-800 last:border-0 group" id="row-${key}">
-                        <div class="flex-1 min-w-0 pr-4">
-                            <div class="flex items-center gap-3">
-                                <span class="text-sm font-mono text-gray-300 dark:text-slate-600 font-bold">${(idx+1).toString().padStart(2, '0')}</span>
-                                <span class="text-base font-medium text-slate-700 dark:text-slate-200 truncate ${data.done ? 'line-through opacity-50' : ''}">${topic}</span>
-                                <button onclick="deleteTopic('${subject.id}', ${idx})" class="delete-btn ml-2 text-red-400 hover:text-red-600 tooltip-container"><i class="fa-solid fa-trash-can"></i><span class="tooltip-text">Delete</span></button>
-                            </div>
+                    <div class="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl group transition-all">
+                        <div class="flex-1 min-w-0 pr-3 flex items-center gap-2">
+                            ${diffBadge}
+                            <span class="text-sm font-medium truncate ${data.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}">${t}</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="openModal('${key}', '${subject.title}', '${topic}')" class="tooltip-container w-8 h-8 rounded-full hover:bg-white dark:hover:bg-slate-600 flex items-center justify-center transition ${data.note ? 'text-yellow-500' : 'text-gray-300'}"><i class="fa-solid fa-note-sticky"></i><span class="tooltip-text">Note</span></button>
-                            <button onclick="openModal('${key}', '${subject.title}', '${topic}')" class="tooltip-container w-8 h-8 rounded-full hover:bg-white dark:hover:bg-slate-600 flex items-center justify-center transition ${data.link ? 'text-indigo-500' : 'text-gray-300'}"><i class="fa-solid fa-link"></i><span class="tooltip-text">Link</span></button>
-                            <label class="checkbox-wrapper cursor-pointer tooltip-container ml-2"><input type="checkbox" class="sr-only" onchange="toggleState('${key}', 'done')" ${data.done ? 'checked' : ''}><div class="w-7 h-7 border-2 border-gray-300 dark:border-slate-500 rounded-lg flex items-center justify-center text-white text-xs shadow-sm transition-all hover:border-indigo-400 bg-white dark:bg-slate-800"><i class="fa-solid fa-check ${data.done ? 'block' : 'hidden'}"></i></div><span class="tooltip-text">Done</span></label>
-                            <label class="checkbox-wrapper cursor-pointer tooltip-container"><input type="checkbox" class="sr-only" onchange="toggleState('${key}', 'rev')" ${data.rev ? 'checked' : ''}><div class="w-7 h-7 border-2 border-gray-300 dark:border-slate-500 rounded-lg flex items-center justify-center text-xs shadow-sm transition-all hover:border-yellow-400 bg-white dark:bg-slate-800 ${data.rev ? '!bg-yellow-400 !border-yellow-400 text-white' : 'text-transparent'}"><i class="fa-solid fa-rotate-right"></i></div><span class="tooltip-text">Revise</span></label>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openModal('${key}', '${sub.title}', '${t}')" class="text-slate-300 hover:text-primary transition"><i class="fa-solid fa-gear"></i></button>
+                            <label class="checkbox-wrapper cursor-pointer">
+                                <input type="checkbox" class="sr-only" onchange="toggleState('${key}')" ${data.done ? 'checked' : ''}>
+                                <div class="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check ${data.done ? 'block' : 'hidden'}"></i></div>
+                            </label>
                         </div>
                     </div>`;
                 }).join('');
-                
-                const percent = total===0?0:Math.round((doneCount/total)*100);
-                const card = document.createElement('div');
-                card.id = `module-${subject.id}`;
-                card.className = "glass-panel rounded-3xl shadow-sm border border-white/60 dark:border-slate-700 flex flex-col overflow-hidden transition hover:shadow-lg";
-                card.innerHTML = `
-                    <div class="p-6 border-b border-gray-100 dark:border-slate-700 bg-white/40 dark:bg-slate-800/40">
-                        <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-lg text-slate-800 dark:text-white tracking-tight">${subject.title}</h3><span class="text-xs font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-3 py-1 rounded-full">${percent}%</span></div>
-                        <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-1000" style="width: ${percent}%"></div></div>
-                    </div>
-                    <div class="flex-1 md:overflow-y-auto md:max-h-[400px] h-auto custom-scrollbar">${rows}</div>
-                    <div class="p-3 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-700 flex gap-2">
-                        <input type="text" id="add-input-${subject.id}" placeholder="Add topic..." onkeypress="if(event.key==='Enter') addTopic('${subject.id}')" class="flex-1 bg-white dark:bg-slate-900 text-sm p-2 rounded-lg border border-gray-200 dark:border-slate-600 focus:outline-none focus:border-indigo-500 dark:text-white">
-                        <button onclick="addTopic('${subject.id}')" class="bg-indigo-500 text-white w-8 h-8 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition"><i class="fa-solid fa-plus"></i></button>
-                    </div>`;
-                grid.appendChild(card);
-            });
-        }
 
-        // --- 5. LOGIC ACTIONS ---
-        function toggleState(key, type) {
-            if (!appState.progress[key]) appState.progress[key] = { done: false, rev: false };
-            appState.progress[key][type] = !appState.progress[key][type];
-            if (type === 'rev' && appState.progress[key][type]) appState.progress[key].done = true;
-            saveToCloud(); 
-            // Optimistic update
-            updateGamification(); recommendNextTopic(); renderDashboard();
-            if(type === 'done' && appState.progress[key].done) {
-                 const modId = key.split('-')[0]; const mod = appState.syllabus.find(s => s.id === modId);
-                 if(mod && mod.topics.every((t, i) => appState.progress[`${modId}-${i}`]?.done)) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+                
+                grid.innerHTML += `
+                <div class="glass-panel rounded-2xl border-white/50 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-700 bg-white/40 dark:bg-slate-800/40">
+                        <div class="flex justify-between items-center mb-2"><h3 class="font-bold dark:text-white">${sub.title}</h3><span class="text-xs font-bold bg-indigo-100 text-primary px-2 py-1 rounded-md">${pct}%</span></div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5"><div class="bg-primary h-1.5 rounded-full transition-all" style="width: ${pct}%"></div></div>
+                    </div>
+                    <div class="flex-1 md:max-h-[350px] overflow-y-auto custom-scrollbar p-1">${rows}</div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/50 flex gap-2">
+                        <input id="add-${sub.id}" type="text" class="flex-1 text-sm p-2 rounded-lg border dark:bg-slate-900 dark:border-slate-700 dark:text-white" placeholder="Add topic..." onkeypress="if(event.key==='Enter') addTopic('${sub.id}')">
+                        <button onclick="addTopic('${sub.id}')" class="bg-primary text-white w-9 rounded-lg"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            // AI Suggestion
+            const weakSub = Object.keys(hardUnfinished).reduce((a, b) => hardUnfinished[a] > hardUnfinished[b] ? a : b, null);
+            if (weakSub) {
+                document.getElementById('ai-insight-box').classList.remove('hidden');
+                document.getElementById('ai-msg').innerHTML = `Focus on <b>${weakSub}</b>. You have ${hardUnfinished[weakSub]} pending hard topics.`;
+            } else {
+                document.getElementById('ai-insight-box').classList.add('hidden');
             }
         }
 
+        function renderRevisions() {
+            const list = document.getElementById('revision-list'); list.innerHTML = '';
+            const now = new Date();
+            let count = 0;
+            
+            // Logic: 1, 3, 7, 15 days after completion
+            Object.keys(appState.progress).forEach(key => {
+                const data = appState.progress[key];
+                if (data.done && data.dateCompleted) {
+                    const diffDays = Math.floor((now - new Date(data.dateCompleted)) / (1000 * 60 * 60 * 24));
+                    if ([1, 3, 7, 15].includes(diffDays)) {
+                        count++;
+                        const [subId, tIdx] = key.split('-');
+                        const sub = appState.syllabus.find(s => s.id === subId);
+                        if (sub) {
+                            list.innerHTML += `
+                            <div class="min-w-[200px] bg-white dark:bg-slate-800 p-3 rounded-xl border border-yellow-200 dark:border-yellow-900 shadow-sm">
+                                <span class="text-[10px] text-yellow-600 font-bold uppercase">Review Day ${diffDays}</span>
+                                <p class="font-bold text-sm truncate dark:text-white">${sub.topics[tIdx]}</p>
+                                <p class="text-xs text-slate-400 truncate">${sub.title}</p>
+                            </div>`;
+                        }
+                    }
+                }
+            });
+            if(count === 0) list.innerHTML = `<div class="text-sm text-slate-400 italic p-2">Nothing scheduled for review today.</div>`;
+        }
+
+        // --- 5. GAMIFICATION & LOGIC ---
+        function toggleState(key) {
+            if (!appState.progress[key]) appState.progress[key] = { done: false };
+            const wasDone = appState.progress[key].done;
+            appState.progress[key].done = !wasDone;
+            
+            // Date for revision
+            if (!wasDone) appState.progress[key].dateCompleted = new Date().toISOString();
+            
+            // XP Calculation
+            let xpGain = 10; // Default
+            if (appState.progress[key].difficulty === "Medium") xpGain = 20;
+            if (appState.progress[key].difficulty === "Hard") xpGain = 30;
+            
+            if (!wasDone) appState.userProfile.xp += xpGain;
+            else appState.userProfile.xp -= xpGain;
+
+            // Update Daily Target UI locally
+            updateDailyTargetUI(wasDone ? -1 : 1);
+
+            saveToCloud();
+            if(!wasDone) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function updateGamification() {
+            const xp = appState.userProfile.xp;
+            let rank = "Novice";
+            if(xp > 100) rank = "Apprentice";
+            if(xp > 500) rank = "Scholar";
+            if(xp > 1500) rank = "Expert";
+            if(xp > 3000) rank = "Architect";
+            
+            document.getElementById('user-rank').innerText = rank;
+            document.getElementById('user-xp').innerText = xp;
+            document.getElementById('xp-progress').style.width = `${Math.min(100, (xp % 500)/5)}%`; // Simplified level logic
+            document.getElementById('streak-badge').innerText = `🔥 ${appState.userProfile.streak} Day`;
+            
+            // Daily Target
+            document.getElementById('today-goal').innerText = appState.userProfile.dailyTarget;
+        }
+
+        function updateDailyTargetUI(change) {
+            const el = document.getElementById('today-done');
+            let val = parseInt(el.innerText) + change;
+            if(val < 0) val = 0;
+            el.innerText = val;
+            const target = appState.userProfile.dailyTarget;
+            document.getElementById('daily-bar').style.width = `${Math.min(100, (val/target)*100)}%`;
+        }
+
+        function adjustTarget(n) {
+            appState.userProfile.dailyTarget += n;
+            if(appState.userProfile.dailyTarget < 1) appState.userProfile.dailyTarget = 1;
+            saveToCloud();
+        }
+
+        // --- 6. MODAL & EDITING ---
+        function openModal(key, sub, topic) {
+            currentModalKey = key;
+            const p = appState.progress[key] || {};
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.getElementById('modal-topic-title').innerText = topic;
+            
+            document.getElementById('modal-difficulty').value = p.difficulty || "Easy";
+            document.getElementById('modal-time').value = p.time || "";
+            document.getElementById('modal-notes').value = p.note || "";
+            document.getElementById('modal-link').value = p.link || "";
+            
+            // Mistake toggle logic
+            document.getElementById('modal-mistake-check').checked = false;
+            document.getElementById('modal-mistake-text').classList.add('hidden');
+            document.getElementById('modal-mistake-text').value = "";
+            
+            document.getElementById('modal-mistake-check').onchange = (e) => {
+                document.getElementById('modal-mistake-text').classList.toggle('hidden', !e.target.checked);
+            };
+        }
+
+        function saveModalDetails() {
+            if(!currentModalKey) return;
+            if(!appState.progress[currentModalKey]) appState.progress[currentModalKey] = {};
+            
+            const p = appState.progress[currentModalKey];
+            p.difficulty = document.getElementById('modal-difficulty').value;
+            p.time = document.getElementById('modal-time').value;
+            p.note = document.getElementById('modal-notes').value;
+            p.link = document.getElementById('modal-link').value;
+
+            // Handle Mistake
+            if(document.getElementById('modal-mistake-check').checked) {
+                const txt = document.getElementById('modal-mistake-text').value;
+                if(txt) {
+                    appState.userProfile.mistakes.push({ topic: document.getElementById('modal-topic-title').innerText, note: txt, date: new Date().toISOString() });
+                }
+            }
+
+            saveToCloud();
+            closeModal();
+        }
+        function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+
+        // --- 7. MISTAKES & MOCKS & RESOURCES ---
+        function renderMistakes() {
+            const list = document.getElementById('mistake-list'); list.innerHTML = '';
+            if(!appState.userProfile.mistakes.length) { list.innerHTML = `<p class="text-slate-400 italic">No mistakes logged yet.</p>`; return; }
+            appState.userProfile.mistakes.forEach(m => {
+                list.innerHTML += `
+                <div class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30">
+                    <h4 class="font-bold text-red-700 dark:text-red-400 text-sm">${m.topic}</h4>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm mt-1">${m.note}</p>
+                    <span class="text-[10px] text-slate-400">${new Date(m.date).toLocaleDateString()}</span>
+                </div>`;
+            });
+        }
+
+        function renderResources() {
+            const list = document.getElementById('resource-list'); list.innerHTML = '';
+            Object.keys(appState.progress).forEach(k => {
+                const p = appState.progress[k];
+                if(p.link) {
+                    const [sid, tid] = k.split('-');
+                    const t = appState.syllabus.find(s=>s.id===sid).topics[tid];
+                    list.innerHTML += `
+                    <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                        <div class="overflow-hidden mr-3"><h4 class="font-bold text-sm truncate dark:text-white">${t}</h4><p class="text-xs text-slate-400 truncate">${p.link}</p></div>
+                        <a href="${p.link}" target="_blank" class="w-8 h-8 rounded-lg bg-indigo-50 text-primary flex items-center justify-center"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                    </div>`;
+                }
+            });
+        }
+
+        function addMockTest() {
+            const subject = prompt("Subject Name?");
+            const score = prompt("Score (e.g. 15/20)?");
+            if(subject && score) {
+                appState.userProfile.mockTests.push({ subject, score, date: new Date().toISOString() });
+                saveToCloud();
+            }
+        }
+
+        function renderMocks() {
+            const body = document.getElementById('mock-table-body'); body.innerHTML = '';
+            appState.userProfile.mockTests.forEach(m => {
+                body.innerHTML += `
+                <tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="p-4">${new Date(m.date).toLocaleDateString()}</td>
+                    <td class="p-4 font-bold text-slate-700 dark:text-white">${m.subject}</td>
+                    <td class="p-4 text-primary font-bold">${m.score}</td>
+                    <td class="p-4 text-xs text-slate-400">Recorded</td>
+                </tr>`;
+            });
+        }
+
+        // --- 8. HELPERS ---
         function addTopic(subId) {
-            const input = document.getElementById(`add-input-${subId}`);
-            if(!input.value) return;
+            const input = document.getElementById(`add-${subId}`);
+            if(!input.value.trim()) return;
             const sub = appState.syllabus.find(s => s.id === subId);
             sub.topics.push(input.value);
             input.value = "";
             saveToCloud();
         }
 
-        function deleteTopic(subId, idx) {
-            if(!confirm("Delete this topic?")) return;
-            const sub = appState.syllabus.find(s => s.id === subId);
-            sub.topics.splice(idx, 1);
-            // Data cleanup: Shift progress keys
-            for (let i = idx; i < sub.topics.length; i++) {
-                const oldKey = `${subId}-${i+1}`, newKey = `${subId}-${i}`;
-                if (appState.progress[oldKey]) appState.progress[newKey] = appState.progress[oldKey];
-                else delete appState.progress[newKey];
-            }
-            delete appState.progress[`${subId}-${sub.topics.length}`];
-            saveToCloud();
-        }
-
-        function updateGamification() {
-            let t=0, d=0; appState.syllabus.forEach(s=>s.topics.forEach((x,i)=>{t++; if(appState.progress[`${s.id}-${i}`]?.done)d++}));
-            const p = t===0?0:Math.round((d/t)*100); 
-            let r="Novice", ic="🌱"; if(p>25){r="Apprentice";ic="🔨"} if(p>50){r="Scholar";ic="📚"} if(p>75){r="Master";ic="⚡"} if(p>95){r="Legend";ic="👑"}
-            document.getElementById('user-rank').innerText = r; document.getElementById('user-badge-icon').innerText = ic;
-            document.getElementById('sidebar-progress').style.width = `${p}%`;
-            document.getElementById('sidebar-percent').innerText = `${p}% Mastery`;
-        }
-
-        // --- 6. HELPERS ---
+        function renderSidebar() { /* Same as before, just refresh XP */ updateGamification(); } // handled via renderAll
         function switchView(v) {
-            document.getElementById('view-dashboard').classList.add('hidden'); document.getElementById('view-resources').classList.add('hidden');
-            if(v==='dashboard') document.getElementById('view-dashboard').classList.remove('hidden');
-            if(v==='resources') { renderResources(); document.getElementById('view-resources').classList.remove('hidden'); }
+            ['dashboard','mocks','mistakes','resources'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
+            document.getElementById(`view-${v}`).classList.remove('hidden');
+            if(v==='resources') renderResources();
+            if(v==='mocks') renderMocks();
+            if(v==='mistakes') renderMistakes();
             if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
         }
-        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
-        function applyTheme() { if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); }
-        function handleSearch() { const q = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('[id^="row-"]').forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
-        function initCountdown() {
-            const c = document.getElementById('exam-card'); if(!appState.examDate) return c.classList.add('hidden'); c.classList.remove('hidden');
-            const diff = new Date(appState.examDate) - new Date(); const d = Math.ceil(diff/(1000*60*60*24)); document.getElementById('countdown-timer').innerText = d > 0 ? `${d} Days` : "Today!";
-        }
-        let tInt, time=1500, run=false;
-        function toggleTimer() { if(run) { clearInterval(tInt); document.getElementById('timer-btn').innerHTML = '<i class="fa-solid fa-play ml-0.5"></i>'; } else { tInt = setInterval(() => { time--; const m = Math.floor(time/60), s = time%60; document.getElementById('timer-display').innerText = `${m}:${s<10?'0'+s:s}`; if(time<=0) resetTimer(); }, 1000); document.getElementById('timer-btn').innerHTML = '<i class="fa-solid fa-pause"></i>'; } run = !run; }
-        function resetTimer() { clearInterval(tInt); time=1500; run=false; document.getElementById('timer-display').innerText="25:00"; document.getElementById('timer-btn').innerHTML='<i class="fa-solid fa-play ml-0.5"></i>'; }
-        
-        // Modals & Resources
-        function renderResources() {
-            const c = document.getElementById('resource-list'); c.innerHTML = ''; let count = 0;
-            appState.syllabus.forEach(s => s.topics.forEach((t, i) => {
-                const k = `${s.id}-${i}`; const p = appState.progress[k];
-                if(p && p.link) { count++; c.innerHTML += `<div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="overflow-hidden mr-4"><h4 class="font-bold text-lg text-slate-800 dark:text-white truncate">${t}</h4><span class="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/50 px-2 py-1 rounded">${s.title}</span></div><a href="${p.link}" target="_blank" class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>`; }
-            }));
-            if(count===0) c.innerHTML = '<div class="col-span-full text-center py-12 opacity-50"><i class="fa-solid fa-bookmark text-4xl mb-3"></i><p>No resources saved yet.</p></div>';
-        }
-        function openModal(key, sub, topic) {
-            currentModalKey = key; const p = appState.progress[key] || {};
-            document.getElementById('modal-subject').innerText = sub; document.getElementById('modal-topic-title').innerText = topic;
-            document.getElementById('modal-notes').value = p.note || ""; document.getElementById('modal-link').value = p.link || "";
-            document.getElementById('detail-modal').classList.remove('hidden');
-        }
-        function saveModalDetails() {
-            if(!currentModalKey) return; if(!appState.progress[currentModalKey]) appState.progress[currentModalKey] = {done: false};
-            appState.progress[currentModalKey].note = document.getElementById('modal-notes').value;
-            appState.progress[currentModalKey].link = document.getElementById('modal-link').value;
-            saveToCloud(); document.getElementById('detail-modal').classList.add('hidden'); renderDashboard();
-        }
-        function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); }
-
-        // Settings
         function openSettings() {
             const list = document.getElementById('priority-list'); list.innerHTML = '';
-            appState.subjectOrder.forEach(id => { const s = appState.syllabus.find(x => x.id === id); if(s) list.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-600 rounded-lg flex justify-between items-center cursor-move" data-id="${id}"><span class="font-bold text-sm dark:text-white">${s.title}</span><i class="fa-solid fa-grip-lines text-slate-400"></i></div>`; });
-            document.getElementById('exam-date-input').value = appState.examDate || "";
+            appState.subjectOrder.forEach(id => {
+                const s = appState.syllabus.find(x => x.id === id);
+                if(s) list.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-600 rounded-lg flex justify-between items-center cursor-move" data-id="${id}"><span class="font-bold text-sm dark:text-white">${s.title}</span><i class="fa-solid fa-bars text-slate-400"></i></div>`;
+            });
             document.getElementById('settings-modal').classList.remove('hidden');
-            new Sortable(list, { onEnd: () => { appState.subjectOrder = Array.from(list.children).map(c => c.dataset.id); saveToCloud(); renderSidebar(); renderDashboard(); recommendNextTopic(); } });
+            new Sortable(list, { onEnd: () => { appState.subjectOrder = Array.from(list.children).map(c => c.dataset.id); saveToCloud(); } });
         }
-        function saveSettings() { appState.examDate = document.getElementById('exam-date-input').value; saveToCloud(); initCountdown(); }
-
-        // Flash & Rec
-        function recommendNextTopic() {
-            for(let subId of appState.subjectOrder) {
-                const sub = appState.syllabus.find(s => s.id === subId); if(!sub) continue;
-                for(let i=0; i<sub.topics.length; i++) {
-                    const key = `${sub.id}-${i}`;
-                    if(!appState.progress[key]?.done) {
-                        document.getElementById('suggested-subject').innerText = sub.title; document.getElementById('suggested-topic').innerText = sub.topics[i]; recommendedKey = key; return;
-                    }
-                }
-            }
-            document.getElementById('suggested-subject').innerText = "All Complete"; document.getElementById('suggested-topic').innerText = "Exam Ready!";
-        }
-        function scrollToTopic() {
-            if(recommendedKey) { switchView('dashboard'); const modId = recommendedKey.split('-')[0]; setTimeout(() => { document.getElementById(`module-${modId}`).scrollIntoView({behavior: 'smooth', block: 'center'}); setTimeout(() => { const row = document.getElementById(`row-${recommendedKey}`); row.classList.add('bg-indigo-100', 'dark:bg-indigo-900'); setTimeout(() => row.classList.remove('bg-indigo-100', 'dark:bg-indigo-900'), 1500); }, 500); }, 100); }
-        }
-        function startFlashReview() {
-            const list = document.getElementById('flash-list'); list.innerHTML = '';
-            let candidates = []; appState.syllabus.forEach(sub => { sub.topics.forEach((t, i) => { const k = `${sub.id}-${i}`; const p = appState.progress[k]; if(p && p.done && !p.rev) candidates.push({t, s: sub.title}); }); });
-            if(candidates.length === 0) list.innerHTML = '<p class="text-green-500 font-bold">No pending revisions!</p>';
-            else { for(let i=0; i<3 && candidates.length; i++) { const r = Math.floor(Math.random()*candidates.length); const item = candidates.splice(r, 1)[0]; list.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl border-l-4 border-yellow-400 text-left"><p class="text-xs text-slate-500 uppercase font-bold">${item.s}</p><p class="font-bold text-slate-800 dark:text-white text-lg">${item.t}</p></div>`; } }
-            document.getElementById('flash-modal').classList.remove('hidden');
-        }
-        
-        // Export/Import
-        function exportData() { const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState)); a.download = `pgdac_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
-        
-        function importData(i) { 
-            const r = new FileReader(); 
-            r.onload = e => { 
-                try {
-                    const loadedData = JSON.parse(e.target.result);
-                    appState = loadedData;
-                    saveToCloud(); // IMPORTANT: Save imported data to cloud immediately
-                    location.reload(); 
-                } catch(err) {
-                    alert("Invalid File");
-                }
-            }; 
-            r.readAsText(i.files[0]); 
-        }
-        
-        function setupDragAndDrop() {} // handled in openSettings
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+        // Setup
+        if(window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
     </script>
 </body>
 </html>
